@@ -1,0 +1,70 @@
+:root {
+  --leaf-color-primary: #5f8d74;
+  --leaf-color-primary-hover: #4f7862;
+  --leaf-color-primary-soft: #e7f1ea;
+  --leaf-color-page: #f8f7f2;
+  --leaf-color-card: #ffffff;
+  --leaf-color-surface-muted: #f2f5f0;
+  --leaf-color-text: #26332c;
+  --leaf-color-text-secondary: #657068;
+  --leaf-color-text-muted: #929a94;
+  --leaf-color-border: #dde3dd;
+  --leaf-color-paper: #fffdf8;
+  --leaf-color-paper-warm: #fbfaf5;
+  --leaf-color-selected: #edf6ef;
+  --leaf-color-sage-chip: #e7f1ea;
+  --leaf-color-sand-chip: #f4ead6;
+  --leaf-color-blue-chip: #e7eef0;
+  --leaf-color-peach-chip: #f4e8df;
+  --leaf-color-error: #a25f56;
+  --leaf-color-error-soft: #f7e9e5;
+  --leaf-color-toast: #31453a;
+
+  --leaf-font-ui: "DM Sans", "Inter", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --leaf-font-serif: "Playfair Display", "Noto Serif SC", Georgia, "Times New Roman", serif;
+  --leaf-font-reading: "Noto Serif SC", Georgia, "Times New Roman", serif;
+
+  --leaf-text-xs: 0.625rem;
+  --leaf-text-sm: 0.75rem;
+  --leaf-text-base: 0.875rem;
+  --leaf-text-md: 1rem;
+  --leaf-text-lg: 1.25rem;
+  --leaf-text-title: clamp(2.25rem, 4vw, 3.375rem);
+  --leaf-text-reader-title: clamp(2.625rem, 5.2vw, 4.125rem);
+
+  --leaf-leading-tight: 1.12;
+  --leaf-leading-title: 1.18;
+  --leaf-leading-body: 1.65;
+  --leaf-leading-reading: 1.95;
+
+  --leaf-space-1: 0.25rem;
+  --leaf-space-2: 0.5rem;
+  --leaf-space-3: 0.75rem;
+  --leaf-space-4: 1rem;
+  --leaf-space-5: 1.25rem;
+  --leaf-space-6: 1.5rem;
+  --leaf-space-8: 2rem;
+  --leaf-space-10: 2.5rem;
+  --leaf-space-12: 3rem;
+  --leaf-space-14: 3.5rem;
+  --leaf-space-16: 4rem;
+
+  --leaf-radius-xs: 0.25rem;
+  --leaf-radius-sm: 0.375rem;
+  --leaf-radius-md: 0.5rem;
+  --leaf-radius-lg: 0.75rem;
+  --leaf-radius-round: 999px;
+
+  --leaf-shadow-soft: 0 1px 2px rgba(38, 51, 44, 0.04), 0 14px 36px rgba(95, 141, 116, 0.08);
+  --leaf-shadow-card: 0 1px 1px rgba(38, 51, 44, 0.03), 0 10px 26px rgba(38, 51, 44, 0.055);
+  --leaf-shadow-panel: 0 18px 52px rgba(38, 51, 44, 0.12);
+  --leaf-focus-ring: 0 0 0 3px rgba(95, 141, 116, 0.2);
+
+  --leaf-sidebar-width: 15.25rem;
+  --leaf-sidebar-collapsed-width: 5rem;
+  --leaf-feed-column-width: 30rem;
+  --leaf-reader-max-width: 45rem;
+  --leaf-reader-body-width: 42.5rem;
+  --leaf-content-max-width: 80rem;
+  --leaf-shell-gutter: clamp(1.5rem, 4vw, 3.625rem);
+}

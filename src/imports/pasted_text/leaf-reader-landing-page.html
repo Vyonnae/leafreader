@@ -1,0 +1,1434 @@
+请为我设计并生成一个现代、清新、具有书卷气质的 RSS 阅读器 Web 应用。
+
+项目名称：
+
+**LeafReader — RSS Feed Reader**
+
+这是一个帮助用户集中订阅网站、阅读文章、整理信息和收藏内容的 RSS 阅读工具。
+
+请生成一套可以继续用于真实前端开发的高保真页面，不要只生成概念图。
+
+---
+
+# 一、技术要求
+
+如果生成前端代码，请严格使用以下技术栈：
+
+* Vue 3
+* Vite
+* JavaScript
+* HTML5
+* CSS3
+* Vue Composition API
+* Vue 单文件组件 `.vue`
+* 使用 `<script setup>`，但必须是 JavaScript
+
+禁止使用：
+
+* TypeScript
+* TS
+* TSX
+* React
+* Next.js
+* `.ts` 文件
+* `.tsx` 文件
+* TypeScript 类型声明
+* interface
+* type
+* enum
+
+所有脚本文件使用：
+
+* `.js`
+* `.vue`
+
+正确示例：
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+</script>
+```
+
+不要生成：
+
+```vue
+<script setup lang="ts">
+```
+
+不要在代码中添加任何 TypeScript 类型标注。
+
+---
+
+# 二、产品定位
+
+LeafReader 是一个安静、舒适、轻量的数字阅读空间。
+
+它不应该像传统后台管理系统，也不应该像冰冷的数据工具。
+
+它应该给人一种：
+
+* 打开一本新书
+* 坐在窗边阅读
+* 清晨自然光照进房间
+* 书页、植物、纸张和微风
+* 安静整理知识和灵感
+
+的感觉。
+
+整体界面需要兼顾：
+
+* 阅读效率
+* 内容整理
+* 长时间阅读舒适度
+* 清新的视觉体验
+* 现代产品感
+* 独特的品牌辨识度
+
+---
+
+# 三、整体视觉风格
+
+设计关键词：
+
+* 清新
+* 自然
+* 轻盈
+* 安静
+* 新颖
+* 文艺
+* 书卷气
+* 有呼吸感
+* 温柔但不幼稚
+* 简洁但不单调
+
+设计参考气质：
+
+* 独立书店
+* 阅读手账
+* 植物图鉴
+* 日系杂志排版
+* 现代电子书阅读器
+* 清晨自然光
+* 高级文具品牌
+* 轻量知识管理工具
+
+不要直接模仿现有产品，但可以借鉴以下产品的优点：
+
+* Readwise Reader 的阅读效率
+* Notion 的留白感
+* Medium 的文章排版
+* Craft 的精致感
+* Apple Books 的阅读气质
+* 纸质杂志的版式层次
+
+避免以下风格：
+
+* 传统后台管理系统
+* 过于商务的深蓝色界面
+* 大面积纯黑
+* 赛博朋克
+* 霓虹灯
+* 过度渐变
+* 玻璃拟态滥用
+* 夸张阴影
+* 密集表格
+* 花哨动画
+* 卡通儿童风
+* 页面元素过度拥挤
+
+---
+
+# 四、颜色主题
+
+请使用一套清新、自然、接近纸张和植物的配色。
+
+## 主色
+
+推荐使用：
+
+* 鼠尾草绿色 Sage Green
+* 青瓷绿色 Celadon
+* 淡薄荷绿 Mint
+* 柔和森林绿
+* 清新的浅青绿色
+
+主色参考：
+
+* Primary Green：`#5F8D74`
+* Primary Hover：`#4F7862`
+* Light Green：`#E7F1EA`
+* Pale Mint：`#F0F7F2`
+
+## 背景色
+
+不要使用刺眼的纯白色。
+
+建议：
+
+* Paper Background：`#F8F7F2`
+* Warm White：`#FCFBF7`
+* Surface：`#FFFFFF`
+* Secondary Surface：`#F2F5F0`
+
+背景应具有纸张般温和、自然的感觉。
+
+## 辅助颜色
+
+可以少量加入：
+
+* 淡杏色：`#F4E7D3`
+* 柔和浅黄色：`#F7F0D8`
+* 雾蓝色：`#DCE8EA`
+* 淡灰绿色：`#DDE6DF`
+* 浅珊瑚色：`#E9B8A6`
+
+这些颜色只能作为：
+
+* 分类标签
+* 插图
+* 状态提示
+* 小面积装饰
+* 文章卡片分类区分
+
+不要让页面变成五颜六色的卡通界面。
+
+## 文字颜色
+
+* Primary Text：`#26332C`
+* Secondary Text：`#657068`
+* Muted Text：`#929A94`
+* Border：`#DDE3DD`
+* Error：`#C96B5B`
+* Success：`#5F8D74`
+
+保证文字与背景之间有足够的可读性。
+
+---
+
+# 五、字体与排版
+
+页面要有明显的阅读气质。
+
+## 中文字体
+
+优先使用：
+
+* 思源宋体
+* Noto Serif SC
+* 思源黑体
+* Noto Sans SC
+
+## 英文字体
+
+正文和界面可以搭配：
+
+* Inter
+* Manrope
+* DM Sans
+
+文章标题或品牌标题可以使用具有书刊气质的衬线字体：
+
+* Lora
+* Merriweather
+* Libre Baskerville
+* Cormorant Garamond
+
+建议：
+
+* 产品界面使用现代无衬线字体
+* 文章大标题使用衬线字体
+* 品牌名称可以使用带书卷气的字体
+* 正文行高保持在 1.7 至 1.9
+* 阅读正文宽度不要过宽
+* 每行文字控制在舒适阅读范围内
+
+不要让所有文字都使用同一种字体和粗细。
+
+---
+
+# 六、品牌设计
+
+项目名称：
+
+**LeafReader**
+
+品牌含义：
+
+* Leaf 既代表树叶，也代表书页
+* Reader 代表阅读者和阅读工具
+* 品牌表达自然、知识、成长和安静阅读
+
+Logo 可以将以下元素进行现代化组合：
+
+* 一片叶子
+* 一张书页
+* 打开的书
+* RSS 信号
+* 书签
+
+Logo 不要复杂，不要使用写实插图。
+
+推荐形式：
+
+* 一片折叠成书页形状的叶子
+* 叶片纹理组成简化的 RSS 弧线
+* 打开的书与嫩芽结合
+* 极简线条图标
+
+Logo 需要适合：
+
+* 顶部导航栏
+* Sidebar
+* 浏览器图标
+* 移动端 App 图标
+* 空状态插图
+
+---
+
+# 七、页面结构
+
+请生成以下主要页面：
+
+1. Landing Page 产品欢迎页
+2. Desktop Dashboard 阅读器主页面
+3. Tablet Dashboard
+4. Mobile Dashboard
+5. Mobile Article Reader
+6. Add Feed 弹窗
+7. Search Results 搜索结果页面状态
+8. Saved Articles 收藏页面
+9. Empty State 空状态
+10. Loading State 加载状态
+11. Error State 错误状态
+12. Design System
+13. 可复用组件与 Variants
+
+---
+
+# 八、Landing Page 欢迎页
+
+请设计一个清新、有书卷气、具有品牌辨识度的欢迎页。
+
+## 顶部导航栏
+
+左侧：
+
+* LeafReader Logo
+* LeafReader 品牌名称
+
+中间导航：
+
+* Features
+* Reading
+* Collections
+* About
+
+右侧：
+
+* Sign In
+* Start Reading
+
+导航栏背景保持通透和轻盈，可以使用温暖的纸张白。
+
+## Hero 首屏区域
+
+主标题：
+
+**A quieter place for everything worth reading.**
+
+副标题：
+
+**Collect articles from the web, organize your favorite sources, and enjoy focused reading in one calm space.**
+
+中文表达含义：
+
+把值得阅读的内容集中在一个安静、舒适的阅读空间中。
+
+主要按钮：
+
+* Start Reading
+* Explore Demo
+
+首屏视觉不要使用普通的电脑模型图。
+
+可以设计成更有创意的形式：
+
+* 多张文章卡片像书页一样自然展开
+* 一片叶子逐渐变成阅读页面
+* 不同订阅源像书签一样排列
+* 页面预览与植物线稿自然结合
+* 文章卡片像杂志剪报一样轻微错落
+* 用柔和的纸张层次表现信息流
+
+装饰元素可以包括：
+
+* 简约叶片线稿
+* 轻微纸张纹理
+* 小型书签形状
+* 柔和圆点
+* 手绘感曲线
+* 简洁的阅读符号
+
+不要使用过多装饰。
+
+## 产品特点区域
+
+展示三个主要特点：
+
+### Gather
+
+Collect your favorite websites and publications in one place.
+
+### Organize
+
+Group feeds by topic and keep important articles close.
+
+### Read
+
+Enjoy a calm, focused reading experience without distractions.
+
+每个特点使用简洁线性图标和轻量卡片。
+
+## 阅读预览区域
+
+展示 Dashboard 的局部预览。
+
+突出：
+
+* 清晰的文章列表
+* 舒适的文章阅读排版
+* 分类整理
+* 收藏和未读状态
+* 安静清爽的界面
+
+## Footer
+
+包含：
+
+* Product
+* Features
+* About
+* Privacy
+* GitHub
+* Contact
+
+Footer 保持简洁，不需要复杂多列结构。
+
+---
+
+# 九、Dashboard 主页面
+
+桌面端采用具有创新感的三栏结构，但不要像普通后台系统。
+
+整体结构：
+
+* 左侧：Library Sidebar
+* 中间：Story Stream
+* 右侧：Reading Page
+
+可以让中间和右侧区域像摊开的书本两页，但要保持现代 Web 应用体验。
+
+## 推荐尺寸
+
+* Desktop：1440px
+* Sidebar：220px 至 250px
+* Feed List：400px 至 460px
+* Reader Pane：剩余区域
+* 页面最大高度适配浏览器视口
+* 每个区域支持独立滚动
+
+区域之间不要使用粗重边框。
+
+可以使用：
+
+* 柔和背景差异
+* 细分隔线
+* 纸张层叠感
+* 轻微圆角
+* 极浅阴影
+
+---
+
+# 十、左侧 Library Sidebar
+
+Sidebar 不应像传统管理系统菜单，而应该像个人书架或阅读目录。
+
+顶部显示：
+
+* LeafReader Logo
+* 产品名称
+* 折叠按钮
+
+主要导航：
+
+* Today
+* All Stories
+* Saved
+* Recently Read
+
+每个导航项目包括：
+
+* 简洁图标
+* 名称
+* 未读数量
+* Active 状态
+
+## Collections 分类区域
+
+标题：
+
+**Collections**
+
+分类示例：
+
+* Web Development
+* Design Notes
+* Technology
+* Artificial Intelligence
+* Inspiration
+
+每个分类可以使用不同但柔和的圆点颜色。
+
+不要使用大面积彩色背景。
+
+## Publications 订阅源区域
+
+标题：
+
+**Publications**
+
+来源示例：
+
+* Smashing Magazine
+* CSS-Tricks
+* The Verge
+* TechCrunch
+* A List Apart
+* Vue.js Blog
+
+每个来源显示：
+
+* 网站图标
+* 来源名称
+* 未读数量
+
+## Sidebar 底部
+
+包含：
+
+* Add Publication
+* Settings
+* 用户头像
+* 用户名称
+* 简短状态
+
+添加订阅按钮可以设计为：
+
+* 细边框按钮
+* 带叶片或加号图标
+* Hover 时显示浅绿色背景
+
+需要设计：
+
+* Default
+* Hover
+* Active
+* Focus
+* Collapsed
+* Mobile Drawer
+
+---
+
+# 十一、顶部工具栏 Top Bar
+
+顶部工具栏保持简洁。
+
+包含：
+
+* 当前页面标题
+* 日期或问候语
+* 搜索框
+* 布局切换
+* 筛选按钮
+* 用户头像
+
+问候语示例：
+
+**Good morning. Here is your reading list.**
+
+搜索框占位文字：
+
+**Search stories, authors, or publications...**
+
+搜索框样式：
+
+* 浅纸张背景
+* 轻微圆角
+* 细边框
+* 搜索图标
+* 输入后显示清除按钮
+* Focus 时显示柔和绿色边框
+* 不要使用强烈发光效果
+
+布局切换包括：
+
+* Comfortable List
+* Compact List
+* Card Grid
+
+---
+
+# 十二、中间文章流 Story Stream
+
+中间区域是文章浏览列表。
+
+顶部显示：
+
+* 当前筛选名称
+* 未读文章数量
+* Sort
+* Filter
+* Mark all as read
+
+## 文章列表项
+
+每篇文章包含：
+
+* Publication 来源
+* 来源图标
+* 发布时间
+* 标题
+* 摘要
+* 作者
+* 预计阅读时间
+* 分类标签
+* 未读状态
+* 收藏按钮
+* 更多操作
+
+示例文章标题：
+
+* Building Calm and Accessible Interfaces
+* A Practical Guide to Vue Composition API
+* Why Good Reading Experiences Feel Invisible
+* Understanding Modern CSS Container Queries
+* Designing Products for Slow and Focused Use
+* How Artificial Intelligence Changes Creative Work
+
+## 未读状态
+
+未读文章可以表现为：
+
+* 标题更深、更粗
+* 左侧有小型绿色圆点
+* 背景为极浅绿色
+* 来源名称更加明显
+
+已读文章：
+
+* 背景接近纸张白
+* 标题颜色稍浅
+* 未读圆点消失
+
+## 卡片的新颖设计
+
+不要让每张卡片看起来完全相同。
+
+可以通过以下方式增加新颖感：
+
+* 分类标签使用不同的柔和色
+* 精选文章显示小型封面图
+* 普通文章保持纯文字排版
+* 重要文章显示书签形侧边标记
+* Hover 时卡片轻微上移 2px
+* 当前选中文章像夹在书中的纸页一样突出
+* 使用不对称但整齐的杂志式排版
+
+但要保持整体一致，不要显得凌乱。
+
+---
+
+# 十三、卡片视图 Card Grid
+
+Card Grid 使用两列或三列布局。
+
+卡片包括：
+
+* 可选文章图片
+* Publication
+* 标题
+* 两至三行摘要
+* 阅读时间
+* 发布时间
+* 收藏按钮
+* 分类标签
+
+部分卡片可以设计成：
+
+* 纯文字卡片
+* 带顶部图片卡片
+* 引用式卡片
+* 编辑推荐卡片
+
+使用统一栅格保持页面整齐。
+
+卡片圆角建议：
+
+* 12px 至 16px
+
+卡片阴影：
+
+* 非常轻微
+* 主要依靠边框和背景层次
+* 不要使用悬浮感过强的阴影
+
+---
+
+# 十四、右侧 Reading Page
+
+阅读区域要像一本现代电子书。
+
+顶部工具栏包含：
+
+* 返回或关闭按钮
+* 收藏
+* 标记已读或未读
+* 调整文字大小
+* 阅读模式
+* 在原网站打开
+* 更多操作
+
+文章头部包含：
+
+* 分类
+* Publication
+* 发布时间
+* 文章标题
+* 副标题
+* 作者头像
+* 作者名称
+* 预计阅读时间
+
+文章标题使用具有书卷气的衬线字体。
+
+正文需要支持：
+
+* H1
+* H2
+* H3
+* 段落
+* 图片
+* 图片说明
+* 引用
+* 有序列表
+* 无序列表
+* 链接
+* 代码块
+* 行内代码
+* 分隔线
+
+正文设计要求：
+
+* 最大内容宽度约 680px 至 760px
+* 舒适行高
+* 段落间距明显
+* 页面左右保留充足空间
+* 图片圆角适中
+* 引用区域使用浅绿色或浅米色背景
+* 链接使用克制的绿色
+* 代码块使用柔和灰绿色背景
+
+阅读区域底部包含：
+
+* Previous Story
+* Next Story
+* Save to Collection
+* Open Original Article
+
+---
+
+# 十五、阅读专注模式
+
+增加一个新颖的 Focus Reading Mode。
+
+开启后：
+
+* Sidebar 自动隐藏
+* 文章列表收起
+* 正文居中
+* 页面背景变得更加安静
+* 顶部只保留最必要的操作
+* 显示阅读进度
+* 支持调整字号
+* 支持调整正文宽度
+* 支持浅色阅读和暖色纸张阅读
+
+阅读进度可以使用：
+
+* 顶部细线
+* 右侧小圆点
+* 书签形进度标记
+
+不要使用大型进度条。
+
+---
+
+# 十六、Saved 收藏页面
+
+Saved 页面需要像一个个人阅读收藏夹。
+
+顶部显示：
+
+* Saved Stories
+* 收藏文章数量
+* 分类筛选
+* 搜索
+* 排序
+
+可以按以下方式整理：
+
+* Recently Saved
+* Web Development
+* Design
+* Inspiration
+* Read Later
+
+每个收藏文章支持：
+
+* 取消收藏
+* 移动到分类
+* 标记已读
+* 打开阅读
+* 删除
+
+空状态文案：
+
+**Your reading shelf is still empty.**
+
+辅助文字：
+
+**Save stories you would like to return to later.**
+
+按钮：
+
+**Explore Stories**
+
+---
+
+# 十七、搜索体验
+
+搜索范围包括：
+
+* 文章标题
+* 摘要
+* 正文
+* 作者
+* Publication
+* 分类
+
+搜索结果页面顶部显示：
+
+**Results for “Vue”**
+
+并显示结果数量。
+
+搜索结果可以按类型分组：
+
+* Stories
+* Publications
+* Collections
+
+无结果状态：
+
+**No stories found.**
+
+辅助文案：
+
+**Try a different keyword or clear the current search.**
+
+按钮：
+
+* Clear Search
+* Browse All Stories
+
+---
+
+# 十八、Add Publication 弹窗
+
+弹窗标题：
+
+**Add a new publication**
+
+说明：
+
+**Paste an RSS feed or website address to add it to your reading library.**
+
+输入内容：
+
+* Website or RSS URL
+* Publication Name，可选
+* Collection
+* Update Frequency
+
+按钮：
+
+* Cancel
+* Add Publication
+
+状态包括：
+
+* 默认
+* 输入中
+* URL 格式错误
+* 正在识别 Feed
+* 识别成功
+* 识别失败
+* 重复订阅
+* 添加成功
+
+识别成功后显示：
+
+* 网站图标
+* 网站名称
+* Feed 地址
+* 最近更新时间
+* 预计文章数量
+
+添加成功可以显示轻量 Toast：
+
+**Publication added to your library.**
+
+---
+
+# 十九、空状态设计
+
+所有空状态使用统一的轻量插图风格。
+
+插图元素可以使用：
+
+* 空书架
+* 打开的书
+* 单片叶子
+* 未写字的纸页
+* 书签
+* 小型植物
+* RSS 波纹
+
+不要使用夸张的 3D 插画。
+
+## All Stories 为空
+
+标题：
+
+**Your reading space is ready.**
+
+说明：
+
+**Add your first publication and begin building your personal reading library.**
+
+按钮：
+
+**Add Publication**
+
+## 搜索为空
+
+标题：
+
+**No stories found.**
+
+按钮：
+
+**Clear Search**
+
+## Saved 为空
+
+标题：
+
+**Your reading shelf is still empty.**
+
+按钮：
+
+**Browse Stories**
+
+## Collection 为空
+
+标题：
+
+**Nothing has been added to this collection yet.**
+
+按钮：
+
+**Move Stories Here**
+
+---
+
+# 二十、加载状态
+
+使用骨架屏，不要只显示旋转图标。
+
+需要设计：
+
+* Sidebar 骨架
+* 文章列表骨架
+* 阅读正文骨架
+* 图片骨架
+* Feed 识别骨架
+
+骨架颜色使用柔和灰绿色，不要闪烁得过于明显。
+
+可以使用缓慢、轻柔的呼吸动画。
+
+---
+
+# 二十一、错误状态
+
+错误提示保持友好、安静，不要使用大面积红色。
+
+示例：
+
+标题：
+
+**We could not load your stories.**
+
+说明：
+
+**Please check your connection and try again.**
+
+按钮：
+
+* Try Again
+* Return to Library
+
+错误图标使用柔和珊瑚色。
+
+---
+
+# 二十二、响应式设计
+
+## Desktop：1440px
+
+* 显示完整三栏
+* Sidebar 固定
+* Story Stream 和 Reading Page 同时显示
+* 每个区域独立滚动
+* 保持充足留白
+
+## Tablet：768px
+
+* Sidebar 可以折叠
+* 默认显示 Story Stream
+* 点击文章后打开 Reading Page
+* 阅读页可以覆盖文章列表
+* 搜索框保持可用
+* 顶部操作按钮适当收纳
+
+## Mobile：375px
+
+使用单栏结构。
+
+首页显示：
+
+* 顶部品牌栏
+* 搜索入口
+* 分类横向滚动
+* 文章列表
+* 底部导航栏
+
+底部导航：
+
+* Home
+* Collections
+* Saved
+* Profile
+
+移动端要求：
+
+* 点击文章进入独立阅读页面
+* 阅读页顶部显示返回按钮
+* 收藏按钮方便单手点击
+* 所有点击区域至少 44px
+* 不出现横向滚动
+* 长标题正确换行
+* 弹窗使用底部抽屉 Bottom Sheet
+* Sidebar 使用全屏或半屏 Drawer
+* 兼容 375px 小屏幕
+
+---
+
+# 二十三、动效要求
+
+动效需要轻柔、有呼吸感。
+
+推荐：
+
+* 页面切换淡入
+* 卡片 Hover 上移 2px
+* 收藏图标轻微缩放
+* Sidebar 展开平滑滑入
+* Reader Pane 像翻开新书页一样轻微进入
+* 添加订阅成功后出现小型叶片动画
+* 未读状态变化使用柔和过渡
+* Skeleton 使用慢速呼吸动画
+
+避免：
+
+* 大幅旋转
+* 剧烈弹跳
+* 强烈缩放
+* 复杂粒子效果
+* 影响阅读的持续动画
+
+所有动效控制在约 150ms 至 300ms。
+
+---
+
+# 二十四、组件化要求
+
+请使用可复用组件和 Variants。
+
+需要创建以下组件：
+
+* Logo
+* Primary Button
+* Secondary Button
+* Text Button
+* Icon Button
+* Search Input
+* Select
+* Checkbox
+* Toggle
+* Tooltip
+* Toast
+* Modal
+* Bottom Sheet
+* Sidebar Item
+* Collection Item
+* Publication Item
+* Count Badge
+* Story List Item
+* Story Card
+* Bookmark Button
+* Read Status Dot
+* Tag
+* Avatar
+* Reader Toolbar
+* Reading Progress
+* Empty State
+* Error State
+* Skeleton
+* Mobile Navigation
+* Add Publication Modal
+
+组件状态：
+
+* Default
+* Hover
+* Focus
+* Active
+* Selected
+* Disabled
+* Loading
+* Error
+* Success
+
+---
+
+# 二十五、Design System
+
+请单独创建一个 Design System 页面。
+
+## Color Styles
+
+包括：
+
+* Primary
+* Primary Hover
+* Primary Light
+* Paper Background
+* Surface
+* Secondary Surface
+* Border
+* Text Primary
+* Text Secondary
+* Text Muted
+* Success
+* Warning
+* Error
+* 分类辅助色
+
+## Typography Styles
+
+包括：
+
+* Display
+* H1
+* H2
+* H3
+* H4
+* Body Large
+* Body
+* Body Small
+* Caption
+* Label
+* Article Title
+* Article Body
+* Quote
+* Code
+
+## Spacing
+
+使用统一的 4px 或 8px 间距系统。
+
+推荐：
+
+* 4
+* 8
+* 12
+* 16
+* 24
+* 32
+* 40
+* 48
+* 64
+* 80
+
+## Radius
+
+推荐：
+
+* 6px
+* 8px
+* 12px
+* 16px
+* 24px
+* Full
+
+## Shadows
+
+只使用轻微阴影：
+
+* Small
+* Medium
+* Modal
+
+不要使用厚重阴影。
+
+---
+
+# 二十六、数据与功能要求
+
+使用真实感较强的 Mock Data。
+
+不要全部使用 Lorem Ipsum。
+
+文章主题可以包括：
+
+* Vue
+* JavaScript
+* CSS
+* Web Development
+* UI Design
+* Accessibility
+* Artificial Intelligence
+* Product Design
+* Technology
+* Reading
+* Creativity
+
+每篇文章数据可以包括：
+
+* id
+* title
+* excerpt
+* content
+* author
+* publication
+* category
+* publishedAt
+* readingTime
+* isRead
+* isSaved
+* image
+* tags
+
+使用 JavaScript 数组和对象保存 Mock Data。
+
+示例：
+
+```js
+export const stories = [
+  {
+    id: 1,
+    title: 'Building Calm and Accessible Interfaces',
+    excerpt: 'A practical look at designing interfaces that feel clear, quiet, and easy to use.',
+    author: 'Maya Chen',
+    publication: 'Design Notes',
+    category: 'Design',
+    publishedAt: '2 hours ago',
+    readingTime: '6 min read',
+    isRead: false,
+    isSaved: true
+  }
+]
+```
+
+不要添加 TypeScript 类型。
+
+---
+
+# 二十七、前端代码结构
+
+如果生成代码，请按照以下 Vue 3 项目结构组织：
+
+```text
+src/
+├─ assets/
+├─ components/
+│  ├─ app/
+│  │  ├─ AppHeader.vue
+│  │  ├─ AppSidebar.vue
+│  │  └─ MobileNavigation.vue
+│  ├─ feed/
+│  │  ├─ StoryList.vue
+│  │  ├─ StoryListItem.vue
+│  │  ├─ StoryCard.vue
+│  │  └─ StoryToolbar.vue
+│  ├─ reader/
+│  │  ├─ ReaderPane.vue
+│  │  ├─ ReaderToolbar.vue
+│  │  └─ ReadingProgress.vue
+│  └─ ui/
+│     ├─ AppButton.vue
+│     ├─ SearchInput.vue
+│     ├─ EmptyState.vue
+│     ├─ LoadingSkeleton.vue
+│     └─ AddPublicationModal.vue
+├─ data/
+│  └─ stories.js
+├─ pages/
+│  ├─ LandingPage.vue
+│  ├─ DashboardPage.vue
+│  └─ SavedPage.vue
+├─ styles/
+│  ├─ base.css
+│  └─ variables.css
+├─ App.vue
+└─ main.js
+```
+
+所有逻辑使用 JavaScript。
+
+使用：
+
+```vue
+<script setup>
+```
+
+不要使用：
+
+```vue
+<script setup lang="ts">
+```
+
+---
+
+# 二十八、需要实现的基础交互
+
+请让原型或生成页面体现以下功能：
+
+* 在 All Stories、Saved 和 Collections 之间切换
+* 按 Publication 筛选
+* 搜索文章
+* 清除搜索内容
+* 打开文章
+* 打开文章后自动标记已读
+* 手动切换已读和未读
+* 收藏或取消收藏
+* 未读数量实时变化
+* 切换列表模式和卡片模式
+* Mark all as read
+* 添加 Publication
+* 打开和关闭 Add Publication 弹窗
+* Sidebar 折叠
+* Mobile Drawer 打开和关闭
+* 进入 Focus Reading Mode
+* 调整文章字号
+* 显示阅读进度
+
+交互数据可以保存在前端本地状态中。
+
+当前阶段不需要连接真实后端。
+
+---
+
+# 二十九、项目范围
+
+当前是前端 MVP。
+
+本阶段不需要：
+
+* 后端服务
+* 数据库
+* 用户登录注册
+* 支付
+* 真实 RSS 抓取
+* AI 摘要
+* 多人协作
+* 消息推送
+* OPML 导入导出
+* 云端同步
+
+当前重点：
+
+* 高质量视觉设计
+* 清新书卷气风格
+* 阅读体验
+* 分类与 Feed 筛选
+* 搜索
+* 已读和未读状态
+* 收藏
+* 响应式设计
+* 组件化
+* JavaScript 前端实现
+
+---
+
+# 三十、最终输出内容
+
+请最终生成：
+
+1. LeafReader 品牌 Logo
+2. Landing Page
+3. Desktop Dashboard
+4. Desktop Focus Reading Mode
+5. Tablet Dashboard
+6. Mobile Home
+7. Mobile Article Reader
+8. Saved 页面
+9. Search Results 页面
+10. Add Publication 弹窗
+11. Empty States
+12. Loading States
+13. Error States
+14. Design System
+15. 可复用组件与 Variants
+16. 页面跳转和交互原型
+17. Vue 3 + Vite + JavaScript 页面代码
+
+请确保最终效果具有：
+
+* 清新自然的颜色
+* 纸张和书页的气质
+* 舒适的文章排版
+* 新颖但克制的布局
+* 明显的品牌辨识度
+* 完整的桌面端和移动端体验
+
+再次强调：
+
+**只使用 JavaScript，不使用 TypeScript。**
+
+**所有 Vue 组件使用 `.vue` 文件，普通脚本使用 `.js` 文件。**
+
+**不要生成 `.ts`、`.tsx`、React 或 TypeScript 类型代码。**
