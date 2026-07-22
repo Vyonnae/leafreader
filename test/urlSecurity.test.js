@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { isBlockedAddress, normalizeFeedUrl } from "../api/_lib/urlSecurity.js"
+import { isBlockedAddress, normalizeFeedUrl, orderPublicAddresses } from "../api/_lib/urlSecurity.js"
 
 describe("normalizeFeedUrl", () => {
   test("accepts plain http and https feed URLs", () => {
@@ -8,7 +8,10 @@ describe("normalizeFeedUrl", () => {
   })
 
   test("rejects non-http schemes and credentialed URLs", () => {
-    expect(() => normalizeFeedUrl("file:///etc/passwd")).toThrow(/http/i)
+    expect(() => normalizeFeedUrl("file:///etc/passwd")).toThrow(expect.objectContaining({
+      code: "INVALID_FEED_URL",
+      status: 400
+    }))
     expect(() => normalizeFeedUrl("javascript:alert(1)")).toThrow(/http/i)
     expect(() => normalizeFeedUrl("https://user:pass@example.com/feed.xml")).toThrow(/credentials/i)
   })
@@ -16,6 +19,28 @@ describe("normalizeFeedUrl", () => {
   test("rejects localhost and intranet-style hostnames before DNS lookup", () => {
     expect(() => normalizeFeedUrl("http://localhost/feed.xml")).toThrow(/local/i)
     expect(() => normalizeFeedUrl("http://printer.local/rss")).toThrow(/local/i)
+  })
+})
+
+describe("orderPublicAddresses", () => {
+  test("prefers IPv4 while retaining safe IPv6 fallback addresses", () => {
+    expect(orderPublicAddresses([
+      { address: "2606:4700:4700::1111", family: 6 },
+      { address: "1.1.1.1", family: 4 }
+    ])).toEqual([
+      { address: "1.1.1.1", family: 4 },
+      { address: "2606:4700:4700::1111", family: 6 }
+    ])
+  })
+
+  test("rejects the complete DNS result if any address is unsafe", () => {
+    expect(() => orderPublicAddresses([
+      { address: "1.1.1.1", family: 4 },
+      { address: "127.0.0.1", family: 4 }
+    ])).toThrow(expect.objectContaining({
+      code: "UNSAFE_FEED_URL",
+      status: 403
+    }))
   })
 })
 

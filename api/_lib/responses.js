@@ -1,8 +1,8 @@
-import { createRequestId } from "./logger.js"
+import { createRequestId, logRequest } from "./logger.js"
 
 export class ApiRequestError extends Error {
-  constructor(code, message, status = 400) {
-    super(message)
+  constructor(code, message, status = 400, options = {}) {
+    super(message, options.cause ? { cause: options.cause } : undefined)
     this.name = "ApiRequestError"
     this.code = code
     this.status = status
@@ -86,6 +86,17 @@ export function withApi(handler, methods) {
     try {
       return await handler(req, res, requestId)
     } catch (error) {
+      const status = error.code === "UNAUTHORIZED" ? 401 : error.status || 500
+      logRequest("api_error", {
+        requestId,
+        method: req.method,
+        path: String(req.url || "").split("?", 1)[0],
+        code: error.code || "INTERNAL_ERROR",
+        status,
+        errorName: error.name || "Error",
+        message: error.message || "Unknown API error",
+        causeCode: error.cause?.code
+      })
       return errorJson(res, error, requestId)
     }
   }

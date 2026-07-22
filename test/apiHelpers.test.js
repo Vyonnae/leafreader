@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest"
-import { assertMethod, errorJson, json, readJsonBody } from "../api/_lib/responses.js"
+import { describe, expect, test, vi } from "vitest"
+import { ApiRequestError, assertMethod, errorJson, json, readJsonBody, withApi } from "../api/_lib/responses.js"
 
 describe("API response helpers", () => {
   test("serializes stable JSON errors and request IDs", () => {
@@ -43,5 +43,30 @@ describe("API response helpers", () => {
     await expect(readJsonBody({ body: '{"ok":true}' })).resolves.toEqual({ ok: true })
     await expect(readJsonBody({ body: "{bad" })).rejects.toMatchObject({ code: "INVALID_JSON" })
     await expect(readJsonBody({ body: '{"too":"large"}' }, { maxBytes: 4 })).rejects.toMatchObject({ code: "BODY_TOO_LARGE" })
+  })
+
+  test("withApi logs the real classified error while returning its safe response", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {})
+    const handler = withApi(async () => {
+      throw new ApiRequestError("FEED_TIMEOUT", "Feed request timed out.", 504)
+    }, ["POST"])
+    const response = {}
+
+    await handler({ method: "POST", url: "/api/feeds/discover", headers: {} }, response)
+
+    expect(response.statusCode).toBe(504)
+    expect(JSON.parse(response.body)).toMatchObject({
+      code: "FEED_TIMEOUT",
+      message: "LeafReader could not complete this request."
+    })
+    expect(log).toHaveBeenCalledOnce()
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({
+      event: "api_error",
+      method: "POST",
+      path: "/api/feeds/discover",
+      code: "FEED_TIMEOUT",
+      status: 504
+    })
+    log.mockRestore()
   })
 })

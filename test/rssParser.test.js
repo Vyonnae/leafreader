@@ -59,4 +59,11 @@ describe("parseRssFeed", () => {
 
     expect(result.articles).toHaveLength(100)
   })
+
+  test("classifies malformed XML as a client-visible invalid feed error", async () => {
+    await expect(parseRssFeed("<rss><broken>", "https://example.com/rss")).rejects.toMatchObject({
+      code: "INVALID_FEED",
+      status: 422
+    })
+  })
 })

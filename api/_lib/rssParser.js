@@ -1,5 +1,6 @@
 import crypto from "node:crypto"
 import Parser from "rss-parser"
+import { ApiRequestError } from "./responses.js"
 import { sanitizeArticleHtml, toPlainExcerpt } from "./sanitizer.js"
 
 const parser = new Parser({
@@ -14,7 +15,13 @@ const parser = new Parser({
 
 export async function parseRssFeed(xml, feedUrl, options = {}) {
   const maxItems = options.maxItems ?? 100
-  const parsed = await parser.parseString(String(xml || ""))
+  let parsed
+
+  try {
+    parsed = await parser.parseString(String(xml || ""))
+  } catch (error) {
+    throw new ApiRequestError("INVALID_FEED", "The address did not return valid RSS or Atom XML.", 422, { cause: error })
+  }
   const siteUrl = normalizeOptionalUrl(parsed.link)
 
   const feed = {

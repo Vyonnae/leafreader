@@ -2,6 +2,7 @@ import dns from "node:dns/promises"
 import http from "node:http"
 import https from "node:https"
 import ipaddr from "ipaddr.js"
+import { ApiRequestError } from "./responses.js"
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "localhost.localdomain"])
 const DEFAULT_TIMEOUT_MS = Number(process.env.RSS_FETCH_TIMEOUT_MS || 10000)
@@ -13,20 +14,20 @@ export function normalizeFeedUrl(value) {
   try {
     url = new URL(String(value || "").trim())
   } catch {
-    throw new Error("Feed URL must be a valid HTTP or HTTPS URL.")
+    throw new ApiRequestError("INVALID_FEED_URL", "Feed URL must be a valid HTTP or HTTPS URL.", 400)
   }
 
   if (!["http:", "https:"].includes(url.protocol)) {
-    throw new Error("Feed URL must use HTTP or HTTPS.")
+    throw new ApiRequestError("INVALID_FEED_URL", "Feed URL must use HTTP or HTTPS.", 400)
   }
 
   if (url.username || url.password) {
-    throw new Error("Feed URL must not include credentials.")
+    throw new ApiRequestError("INVALID_FEED_URL", "Feed URL must not include credentials.", 400)
   }
 
   const hostname = url.hostname.toLowerCase()
   if (LOCAL_HOSTNAMES.has(hostname) || hostname.endsWith(".local") || hostname.endsWith(".localhost")) {
-    throw new Error("Local feed URLs are not allowed.")
+    throw new ApiRequestError("UNSAFE_FEED_URL", "Local feed URLs are not allowed.", 403)
   }
 
   url.hash = ""
@@ -66,19 +67,34 @@ export function isBlockedAddress(address) {
   return ["reserved", "ipv4Mapped"].includes(range)
 }
 
-export async function resolvePublicAddress(hostname) {
-  const records = await dns.lookup(hostname, { all: true, verbatim: true })
+export function orderPublicAddresses(records) {
+  if (!records.length) {
+    throw new ApiRequestError("FEED_DNS_ERROR", "Feed URL could not be resolved.", 502)
+  }
+
   const blocked = records.find((record) => isBlockedAddress(record.address))
 
   if (blocked) {
-    throw new Error("Feed URL resolves to a private or unsafe address.")
+    throw new ApiRequestError("UNSAFE_FEED_URL", "Feed URL resolves to a private or unsafe address.", 403)
   }
 
-  if (!records.length) {
-    throw new Error("Feed URL could not be resolved.")
-  }
+  return [...records].sort((left, right) => {
+    if (left.family === right.family) return 0
+    return left.family === 4 ? -1 : 1
+  })
+}
 
-  return records[0]
+export async function resolvePublicAddresses(hostname) {
+  try {
+    return orderPublicAddresses(await dns.lookup(hostname, { all: true, verbatim: true }))
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    throw new ApiRequestError("FEED_DNS_ERROR", "Feed URL could not be resolved.", 502, { cause: error })
+  }
+}
+
+export async function resolvePublicAddress(hostname) {
+  return (await resolvePublicAddresses(hostname))[0]
 }
 
 export async function fetchText(urlValue, options = {}) {
@@ -86,12 +102,39 @@ export async function fetchText(urlValue, options = {}) {
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
 
-  return fetchTextInternal(normalizeFeedUrl(urlValue), { maxRedirects, maxBytes, timeoutMs, redirectsSeen: 0, headers: options.headers || {} })
+  return fetchTextInternal(normalizeFeedUrl(urlValue), {
+    maxRedirects,
+    maxBytes,
+    timeoutMs,
+    deadline: Date.now() + timeoutMs,
+    redirectsSeen: 0,
+    headers: options.headers || {}
+  })
 }
 
 async function fetchTextInternal(urlValue, options) {
-  const url = new URL(urlValue)
-  const resolved = await resolvePublicAddress(url.hostname)
+  const url = new URL(normalizeFeedUrl(urlValue))
+  const addresses = await resolvePublicAddresses(url.hostname)
+  let lastError
+
+  for (const resolved of addresses) {
+    const remainingMs = options.deadline - Date.now()
+    if (remainingMs <= 0) {
+      throw new ApiRequestError("FEED_TIMEOUT", "Feed request timed out.", 504)
+    }
+
+    try {
+      return await requestAddress(url, resolved, { ...options, timeoutMs: remainingMs })
+    } catch (error) {
+      if (error instanceof ApiRequestError) throw error
+      lastError = error
+    }
+  }
+
+  throw new ApiRequestError("FEED_FETCH_FAILED", "LeafReader could not reach the feed address.", 502, { cause: lastError })
+}
+
+function requestAddress(url, resolved, options) {
   const client = url.protocol === "https:" ? https : http
 
   return new Promise((resolve, reject) => {
@@ -115,7 +158,7 @@ async function fetchTextInternal(urlValue, options) {
       if ([301, 302, 303, 307, 308].includes(status) && response.headers.location) {
         response.resume()
         if (options.redirectsSeen >= options.maxRedirects) {
-          reject(new Error("Too many feed redirects."))
+          reject(new ApiRequestError("FEED_REDIRECT_ERROR", "Too many feed redirects.", 502))
           return
         }
 
@@ -130,7 +173,7 @@ async function fetchTextInternal(urlValue, options) {
       response.on("data", (chunk) => {
         received += chunk.length
         if (received > options.maxBytes) {
-          request.destroy(new Error("Feed response is too large."))
+          request.destroy(new ApiRequestError("FEED_TOO_LARGE", "Feed response is too large.", 413))
           return
         }
         chunks.push(chunk)
@@ -146,7 +189,7 @@ async function fetchTextInternal(urlValue, options) {
       })
     })
 
-    request.on("timeout", () => request.destroy(new Error("Feed request timed out.")))
+    request.on("timeout", () => request.destroy(new ApiRequestError("FEED_TIMEOUT", "Feed request timed out.", 504)))
     request.on("error", reject)
     request.end()
   })
