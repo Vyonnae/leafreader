@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const signUpMock = vi.fn()
+const signOutMock = vi.fn()
 const resetPasswordForEmailMock = vi.fn()
 const exchangeCodeForSessionMock = vi.fn()
 const updateUserMock = vi.fn()
@@ -11,6 +12,7 @@ vi.mock("../src/services/supabaseClient.js", () => ({
   supabase: {
     auth: {
       signUp: signUpMock,
+      signOut: signOutMock,
       resetPasswordForEmail: resetPasswordForEmailMock,
       exchangeCodeForSession: exchangeCodeForSessionMock,
       updateUser: updateUserMock,
@@ -25,6 +27,7 @@ describe("password recovery auth service", () => {
     vi.clearAllMocks()
     window.history.replaceState({}, "", "/")
     signUpMock.mockResolvedValue({ data: {}, error: null })
+    signOutMock.mockResolvedValue({ data: null, error: null })
     resetPasswordForEmailMock.mockResolvedValue({ data: {}, error: null })
     exchangeCodeForSessionMock.mockResolvedValue({
       data: { session: { user: { id: "reader" } } },
@@ -42,6 +45,15 @@ describe("password recovery auth service", () => {
         emailRedirectTo: "http://localhost:3000/auth/callback?next=%2Fapp",
       }),
     }))
+  })
+
+  test("clears a persisted account before starting a new registration", async () => {
+    await authService.signUpWithEmail("new-reader@example.com", "password", "New Reader")
+
+    expect(signOutMock).toHaveBeenCalledWith({ scope: "local" })
+    expect(signOutMock.mock.invocationCallOrder[0]).toBeLessThan(
+      signUpMock.mock.invocationCallOrder[0],
+    )
   })
 
   test("sends reset emails back through the callback to reset-password", async () => {

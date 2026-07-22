@@ -86,8 +86,18 @@ export function getCurrentUser() {
   )
 }
 
-export function signUpWithEmail(email, password, displayName) {
+async function clearLocalSession() {
+  return runAuthRequest(
+    () => supabase.auth.signOut({ scope: "local" }),
+    "LeafReader could not clear the previous account session.",
+  )
+}
+
+export async function signUpWithEmail(email, password, displayName) {
   const emailRedirectTo = authCallbackUrl("/app")
+  const cleanupResponse = await clearLocalSession()
+
+  if (cleanupResponse.error) return cleanupResponse
 
   return runAuthRequest(
     () =>
