@@ -1,71 +1,14 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import AuthForm from '../components/auth/AuthForm.vue'
-import { useAuth } from '../composables/useAuth'
+import { useRouter } from 'vue-router'
+import { useAuth } from '../../composables/useAuth'
+
+defineProps({
+  heading: { type: String, required: true },
+  introduction: { type: String, required: true },
+})
 
 const router = useRouter()
-const route = useRoute()
-const {
-  isAuthenticated,
-  isSupabaseConfigured,
-  signIn,
-  signUp,
-} = useAuth()
-
-const authMode = ref('sign-in')
-const busy = ref(false)
-const error = ref('')
-const success = ref('')
-
-const heading = computed(() => authMode.value === 'sign-up'
-  ? 'Create a home for your reading.'
-  : 'Welcome back to your reading space.')
-
-const introduction = computed(() => authMode.value === 'sign-up'
-    ? 'Bring your reading preferences with you, without giving up Guest mode.'
-    : 'Sign in to keep your preferences and publications in sync.')
-
-function clearMessages() {
-  error.value = ''
-  success.value = ''
-}
-
-function readerDestination() {
-  const redirect = route.query.redirect
-  if (typeof redirect !== 'string' || !redirect.startsWith('/') || redirect.startsWith('//')) return '/app'
-
-  const resolved = router.resolve(redirect)
-  if (!resolved.name || ['auth', 'auth-callback', 'forgot-password', 'reset-password'].includes(String(resolved.name))) return '/app'
-  return redirect
-}
-
-function openReader() {
-  return router.push(readerDestination())
-}
-
-async function handleAuthSubmit(payload) {
-  clearMessages()
-  busy.value = true
-
-  const response = payload.mode === 'sign-up'
-    ? await signUp(payload.email, payload.password, payload.displayName)
-    : await signIn(payload.email, payload.password)
-
-  busy.value = false
-  if (response.error) {
-    error.value = response.error.message
-    return
-  }
-
-  if (payload.mode === 'sign-up' && !response.data?.session) {
-    success.value = 'Check your inbox to confirm your email, then return here to sign in.'
-    return
-  }
-
-  await openReader()
-}
-
+const { isSupabaseConfigured } = useAuth()
 </script>
 
 <template>
@@ -91,15 +34,10 @@ async function handleAuthSubmit(payload) {
           <path d="M126 254c14-65 27-113 72-165" stroke="#658b75" stroke-width="3" stroke-linecap="round" />
           <path d="M173 119c-23-21-46-15-56 13 27 9 45 4 56-13ZM196 92c-6-31 8-50 38-56 1 29-11 48-38 56ZM155 166c-28-15-49-4-53 26 29 3 46-6 53-26ZM183 143c26-18 50-9 58 20-27 7-47 0-58-20ZM137 210c-29-8-48 7-45 36 28-3 43-14 45-36Z" fill="#b8cbbb" stroke="#658b75" stroke-width="2" />
           <path d="M87 250h82l-9 117H96L87 250Z" fill="#f7f8f3" stroke="#71887b" stroke-width="3" />
-          <path d="M103 269h50M101 292h54" stroke="#b8cbbb" stroke-width="2" />
           <path d="M139 350c66-28 120-21 162 18V225c-51-25-102-21-153 12l-9 113Z" fill="#fffdf8" stroke="#587866" stroke-width="4" />
           <path d="M301 368c43-37 95-45 156-23l-17-118c-51-20-98-10-139 20v121Z" fill="#fffdf8" stroke="#587866" stroke-width="4" />
           <path d="M173 259c33-13 65-14 96-2M169 279c34-13 67-13 99-1M165 300c34-12 68-12 102 0M331 266c27-13 55-17 83-10M334 286c27-11 54-13 82-7M336 306c27-10 52-11 77-4" stroke="#c4cec5" stroke-width="3" stroke-linecap="round" />
           <path d="M256 362h38l-11 48-16-13-19 12 8-47Z" fill="#5f8d74" />
-          <path d="M387 333c0-33 31-52 71-43 8 43-11 78-57 78" fill="#d9e5dc" stroke="#5f8d74" stroke-width="3" />
-          <path d="M387 372c20-27 40-44 62-57" stroke="#5f8d74" stroke-width="3" stroke-linecap="round" />
-          <path d="M383 361h91c0 39-18 59-46 59s-45-20-45-59Z" fill="#a9c0ad" stroke="#587866" stroke-width="3" />
-          <path d="M474 372c33-4 38 36 3 40" stroke="#587866" stroke-width="5" />
         </svg>
       </div>
 
@@ -109,20 +47,9 @@ async function handleAuthSubmit(payload) {
     <section class="auth-content">
       <div class="auth-content-inner">
         <button class="auth-back-to-reader" type="button" @click="router.push('/app')">← Back to LeafReader</button>
-        <button v-if="isAuthenticated" class="auth-open-reader" type="button" @click="router.push('/app')">Open reader →</button>
         <h1>{{ heading }}</h1>
         <p class="auth-introduction">{{ introduction }}</p>
-
-        <AuthForm
-          :configured="isSupabaseConfigured"
-          :busy="busy"
-          :error="error"
-          :success="success"
-          @submit="handleAuthSubmit"
-          @mode-change="authMode = $event"
-          @forgot-password="router.push('/forgot-password')"
-          @continue-guest="router.push('/app')"
-        />
+        <slot />
       </div>
 
       <div class="cloud-availability" :class="{ available: isSupabaseConfigured }" role="status">

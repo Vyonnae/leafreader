@@ -19,8 +19,19 @@ const signInMock = vi.fn().mockResolvedValue({
   error: null,
 })
 const signOutMock = vi.fn().mockResolvedValue({ data: null, error: null })
+const exchangeAuthCodeMock = vi.fn().mockResolvedValue({
+  data: {
+    session: {
+      access_token: "callback-token",
+      user: { id: "callback-user" },
+    },
+    user: { id: "callback-user" },
+  },
+  error: null,
+})
 
 vi.mock("../src/services/authService.js", () => ({
+  exchangeAuthCode: exchangeAuthCodeMock,
   getSession: getSessionMock,
   onAuthStateChange: vi.fn(() => vi.fn()),
   sendPasswordReset: vi.fn(),
@@ -68,6 +79,11 @@ describe("authentication lifecycle", () => {
     expect(signOutMock).toHaveBeenCalledOnce()
     expect(auth.session.value).toBeNull()
     expect(auth.isAuthenticated.value).toBe(false)
+
+    await auth.exchangeAuthCode("email-code")
+    expect(exchangeAuthCodeMock).toHaveBeenCalledWith("email-code")
+    expect(auth.session.value?.access_token).toBe("callback-token")
+    expect(auth.user.value?.id).toBe("callback-user")
 
     await auth.signIn("reader@example.com", "password")
     expect(signInMock).toHaveBeenCalledWith(

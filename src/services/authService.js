@@ -9,6 +9,14 @@ function result(data = null, error = null) {
   return { data, error }
 }
 
+function authCallbackUrl(nextPath) {
+  if (typeof window === "undefined") return undefined
+
+  const callbackUrl = new URL("/auth/callback", window.location.origin)
+  callbackUrl.searchParams.set("next", nextPath)
+  return callbackUrl.toString()
+}
+
 function friendlyAuthError(
   error,
   fallback = "Something went wrong. Please try again.",
@@ -79,10 +87,7 @@ export function getCurrentUser() {
 }
 
 export function signUpWithEmail(email, password, displayName) {
-  const emailRedirectTo =
-    typeof window === "undefined"
-      ? undefined
-      : new URL("/app", window.location.origin).toString()
+  const emailRedirectTo = authCallbackUrl("/app")
 
   return runAuthRequest(
     () =>
@@ -113,14 +118,18 @@ export function signOut() {
 }
 
 export function sendPasswordReset(email) {
-  const redirectTo =
-    typeof window === "undefined"
-      ? undefined
-      : new URL("/reset-password", window.location.origin).toString()
+  const redirectTo = authCallbackUrl("/reset-password")
 
   return runAuthRequest(
     () => supabase.auth.resetPasswordForEmail(email, { redirectTo }),
     "LeafReader could not send the reset email.",
+  )
+}
+
+export function exchangeAuthCode(code) {
+  return runAuthRequest(
+    () => supabase.auth.exchangeCodeForSession(code),
+    "LeafReader could not verify this email link.",
   )
 }
 
@@ -148,6 +157,7 @@ export const authService = {
   signInWithEmail,
   signOut,
   sendPasswordReset,
+  exchangeAuthCode,
   updatePassword,
   onAuthStateChange,
 }

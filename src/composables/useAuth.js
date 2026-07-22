@@ -1,5 +1,6 @@
 import { computed, readonly, ref } from "vue"
 import {
+  exchangeAuthCode as exchangeAuthCodeRequest,
   getSession,
   onAuthStateChange,
   sendPasswordReset,
@@ -76,6 +77,15 @@ async function signIn(email, password) {
   return response
 }
 
+async function exchangeAuthCode(code) {
+  const response = await exchangeAuthCodeRequest(code)
+  if (!response.error) {
+    session.value = response.data?.session || null
+    user.value = response.data?.user || session.value?.user || null
+  }
+  return response
+}
+
 async function signOut() {
   if (isSigningOut.value) {
     return {
@@ -113,6 +123,7 @@ export function useAuth() {
     disposeAuth,
     signUp,
     signIn,
+    exchangeAuthCode,
     signOut,
     sendPasswordReset,
     updatePassword,

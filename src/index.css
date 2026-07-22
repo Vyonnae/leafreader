@@ -16,6 +16,14 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body,
+#app {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 html {
   background: var(--leaf-color-page);
 }
@@ -64,29 +72,10 @@ input::placeholder {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: var(--leaf-sidebar-width) minmax(0, 1fr);
   color: var(--leaf-color-text);
   background:
     linear-gradient(90deg, rgba(242, 245, 240, 0.72), rgba(248, 247, 242, 0) 23rem),
     var(--leaf-color-page);
-}
-
-.app-shell:has(.sidebar.collapsed) {
-  grid-template-columns: var(--leaf-sidebar-collapsed-width) minmax(0, 1fr);
-}
-
-.app-shell.is-reading {
-  grid-template-columns:
-    var(--leaf-sidebar-width)
-    minmax(24rem, var(--leaf-feed-column-width))
-    minmax(0, 1fr);
-}
-
-.app-shell.is-reading:has(.sidebar.collapsed) {
-  grid-template-columns:
-    var(--leaf-sidebar-collapsed-width)
-    minmax(24rem, var(--leaf-feed-column-width))
-    minmax(0, 1fr);
 }
 
 .sidebar {
@@ -1498,25 +1487,7 @@ input::placeholder {
   font-size: 16px;
 }
 
-@media (max-width: 1120px) {
-  .app-shell.is-reading,
-  .app-shell.is-reading:has(.sidebar.collapsed) {
-    grid-template-columns: var(--leaf-sidebar-width) minmax(0, 1fr);
-  }
-
-  .app-shell.is-reading .library {
-    display: none;
-  }
-}
-
 @media (max-width: 900px) {
-  .app-shell,
-  .app-shell:has(.sidebar.collapsed),
-  .app-shell.is-reading,
-  .app-shell.is-reading:has(.sidebar.collapsed) {
-    display: block;
-  }
-
   .sidebar {
     position: fixed;
     z-index: 9;
@@ -2068,6 +2039,25 @@ input::placeholder {
   border-top-color: #fff;
   border-radius: 50%;
   animation: button-spin 700ms linear infinite;
+}
+
+.auth-callback-status {
+  min-height: 120px;
+  place-items: center;
+  align-content: center;
+  color: var(--leaf-color-text-secondary);
+  text-align: center;
+}
+
+.auth-callback-status p {
+  margin: 0;
+}
+
+.auth-callback-spinner {
+  width: 28px;
+  height: 28px;
+  border-color: color-mix(in srgb, var(--leaf-color-primary) 24%, transparent);
+  border-top-color: var(--leaf-color-primary);
 }
 
 @keyframes button-spin { to { transform: rotate(360deg); } }
@@ -2743,18 +2733,7 @@ body.scroll-locked {
 }
 
 .app-shell {
-  grid-template-columns:
-    var(--leaf-sidebar-width)
-    minmax(26rem, var(--leaf-feed-column-width))
-    minmax(0, 1fr);
   overflow-x: clip;
-}
-
-.app-shell:has(.sidebar.collapsed) {
-  grid-template-columns:
-    var(--leaf-sidebar-collapsed-width)
-    minmax(26rem, var(--leaf-feed-column-width))
-    minmax(0, 1fr);
 }
 
 .app-shell.is-focus {
@@ -3564,23 +3543,6 @@ body.scroll-locked {
   }
 }
 
-@media (max-width: 1120px) {
-  .app-shell,
-  .app-shell:has(.sidebar.collapsed),
-  .app-shell.is-reading,
-  .app-shell.is-reading:has(.sidebar.collapsed) {
-    grid-template-columns: var(--leaf-sidebar-width) minmax(0, 1fr);
-  }
-
-  .reader.empty {
-    display: none;
-  }
-
-  .app-shell.is-reading .reader {
-    display: flex;
-  }
-}
-
 @media (max-width: 900px) {
   .drawer-backdrop {
     position: fixed;
@@ -3729,37 +3691,8 @@ body.scroll-locked {
   }
 }
 
-.app-shell:not(.is-reading):not(.is-focus) {
-  grid-template-columns:
-    var(--leaf-sidebar-width)
-    minmax(42rem, 1.2fr)
-    minmax(22rem, 0.8fr);
-}
-
-.app-shell:not(.is-reading):not(.is-focus):has(.sidebar.collapsed) {
-  grid-template-columns:
-    var(--leaf-sidebar-collapsed-width)
-    minmax(42rem, 1.2fr)
-    minmax(22rem, 0.8fr);
-}
-
 .app-shell:not(.is-focus) .library {
   padding-inline: clamp(1.5rem, 2.4vw, 2rem);
-}
-
-@media (max-width: 1120px) {
-  .app-shell,
-  .app-shell:not(.is-reading):not(.is-focus),
-  .app-shell:has(.sidebar.collapsed),
-  .app-shell:not(.is-reading):not(.is-focus):has(.sidebar.collapsed) {
-    display: block;
-  }
-
-  .reader.empty {
-    display: none;
-    height: 0;
-    min-height: 0;
-  }
 }
 
 @media (max-width: 900px) {
@@ -4381,5 +4314,121 @@ body.scroll-locked {
   .catalog-panel .view-switch button {
     min-width: 0;
     flex: 1 1 0;
+  }
+}
+
+/* Canonical application layout: 900px tablet, 1200px wide desktop. */
+.library,
+.catalog-panel,
+.article-list,
+.story-card,
+.reader,
+.reader-bar,
+.reader-scroll,
+.reading-page {
+  min-width: 0;
+}
+
+.library {
+  width: 100%;
+  max-width: var(--leaf-content-max-width);
+  padding-inline: clamp(1.125rem, 3vw, 3rem);
+}
+
+.reader.empty {
+  display: none;
+}
+
+.article-list.grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.app-shell.is-reading .article-list.grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1200px) {
+  .app-shell {
+    grid-template-columns: var(--leaf-sidebar-width) minmax(0, 1fr);
+  }
+
+  .app-shell:has(.sidebar.collapsed) {
+    grid-template-columns: var(--leaf-sidebar-collapsed-width) minmax(0, 1fr);
+  }
+
+  .app-shell.is-reading {
+    grid-template-columns:
+      var(--leaf-sidebar-width)
+      clamp(21rem, 29vw, 30rem)
+      minmax(0, 1fr);
+  }
+
+  .app-shell.is-reading:has(.sidebar.collapsed) {
+    grid-template-columns:
+      var(--leaf-sidebar-collapsed-width)
+      clamp(21rem, 29vw, 30rem)
+      minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1199px) {
+  .app-shell.is-reading .library {
+    display: none;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .app-shell,
+  .app-shell.is-reading {
+    grid-template-columns: var(--leaf-sidebar-width) minmax(0, 1fr);
+  }
+
+  .app-shell:has(.sidebar.collapsed),
+  .app-shell.is-reading:has(.sidebar.collapsed) {
+    grid-template-columns: var(--leaf-sidebar-collapsed-width) minmax(0, 1fr);
+  }
+
+  .reader {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell,
+  .app-shell.is-reading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: fixed;
+    width: min(82vw, var(--leaf-sidebar-width));
+    max-width: calc(100vw - 2rem);
+  }
+
+  .library,
+  .reader {
+    grid-column: 1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .library {
+    padding-inline: clamp(1.125rem, 4vw, 1.75rem);
+  }
+
+  .reader {
+    min-height: 100dvh;
+    height: 100dvh;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .library {
+    padding-inline: clamp(1rem, 4.8vw, 1.25rem);
+  }
+
+  .reading-page {
+    padding-inline: clamp(1rem, 5.4vw, 1.5rem);
   }
 }
