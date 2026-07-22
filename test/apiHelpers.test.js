@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { assertMethod, json, readJsonBody } from "../api/_lib/responses.js"
+import { assertMethod, errorJson, json, readJsonBody } from "../api/_lib/responses.js"
 
 describe("API response helpers", () => {
   test("serializes stable JSON errors and request IDs", () => {
@@ -18,6 +18,25 @@ describe("API response helpers", () => {
       status: 405
     })
     expect(assertMethod({ method: "GET" }, ["GET"])).toEqual({ ok: true })
+  })
+
+  test("normalizes unauthorized errors to HTTP 401", () => {
+    const response = {}
+    errorJson(
+      response,
+      {
+        code: "UNAUTHORIZED",
+        message: "Please sign in to continue.",
+        status: 503,
+      },
+      "req_unauthorized",
+    )
+
+    expect(response.statusCode).toBe(401)
+    expect(JSON.parse(response.body)).toEqual({
+      code: "UNAUTHORIZED",
+      message: "Please sign in to continue.",
+    })
   })
 
   test("readJsonBody enforces valid JSON and byte limits", async () => {

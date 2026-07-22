@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - vercel@56.4.1

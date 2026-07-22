@@ -108,10 +108,18 @@ export function createApiClient({
         Accept: "application/json",
         ...options.headers,
       })
-      const accessToken = options.token ?? (await getAccessToken?.())
-      if (accessToken && !headers.has("Authorization")) {
-        headers.set("Authorization", `Bearer ${accessToken}`)
+      const accessToken = await getAccessToken?.()
+      if (!accessToken) {
+        throw new ApiError("Please sign in to continue.", {
+          status: 401,
+          data: {
+            code: "UNAUTHORIZED",
+            message: "Please sign in to continue.",
+          },
+          url,
+        })
       }
+      headers.set("Authorization", `Bearer ${accessToken}`)
 
       const response = await fetch(url, {
         ...options,

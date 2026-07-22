@@ -41,8 +41,8 @@ export function noContent(res, requestId = createRequestId()) {
 }
 
 export function errorJson(res, error, requestId = createRequestId()) {
-  const status = error.status || 500
   const code = error.code || "INTERNAL_ERROR"
+  const status = code === "UNAUTHORIZED" ? 401 : error.status || 500
   const message = status >= 500 ? "LeafReader could not complete this request." : error.message
   return json(res, status, { code, message }, requestId)
 }

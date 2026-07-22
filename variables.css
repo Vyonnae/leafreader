@@ -1,0 +1,22 @@
+:root {
+  --color-primary: #5f8d74;
+  --color-primary-hover: #4f7862;
+  --color-primary-light: #e7f1ea;
+
+  --color-background: #f8f7f2;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f2f5f0;
+
+  --color-text-primary: #26332c;
+  --color-text-secondary: #657068;
+  --color-text-muted: #929a94;
+  --color-border: #dde3dd;
+
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 16px;
+
+  --sidebar-width: 240px;
+  --feed-width: 430px;
+  --reader-max-width: 720px;
+}
