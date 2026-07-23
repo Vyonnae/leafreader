@@ -38,7 +38,31 @@ export const pwaOptions = {
     globPatterns: ["**/*.{js,css,html,svg,woff2}"],
     navigateFallback: "index.html",
     navigateFallbackDenylist: [/^\/api(?:\/|$)/],
-    runtimeCaching: [],
+    runtimeCaching: [
+      {
+        urlPattern: /^https?:.*\.(?:png|jpg|jpeg|webp|gif|svg)$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "leafreader-images",
+          expiration: {
+            maxEntries: 120,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          },
+        },
+      },
+      {
+        urlPattern: ({ url, request }) => request.method === "GET" && url.pathname === "/api/library",
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "leafreader-library",
+          networkTimeoutSeconds: 4,
+          expiration: {
+            maxEntries: 20,
+            maxAgeSeconds: 7 * 24 * 60 * 60,
+          },
+        },
+      },
+    ],
     cleanupOutdatedCaches: true,
   },
 }

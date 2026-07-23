@@ -77,7 +77,7 @@ const opmlFeeds = ref([])
 const opmlErrors = ref([])
 const deleteConfirmation = ref('')
 
-const groups = ['Account', 'Reading', 'Appearance', 'Behavior', 'Data']
+const groups = ['Account', 'Reading', 'Appearance', 'Behavior', 'Data', 'About']
 
 watch(() => props.profile?.display_name, (value) => {
   displayName.value = value || ''
@@ -356,17 +356,17 @@ defineExpose({
 
             <div class="setting-row">
               <div>
-                <h4>Reading background</h4>
-                <p>Choose a fresh surface or warmer paper tone.</p>
+                <h4>Reading theme</h4>
+                <p>Choose light, sepia, or dark for the reader pane.</p>
               </div>
               <div class="segmented-control" role="group" aria-label="Reading background">
                 <button
-                  v-for="option in ['fresh', 'paper']"
+                  v-for="option in ['light', 'sepia', 'dark']"
                   :key="option"
                   type="button"
-                  :class="{ active: settings.readingBackground === option }"
-                  :aria-pressed="settings.readingBackground === option"
-                  @click="updateSetting('readingBackground', option)"
+                  :class="{ active: settings.readingTheme === option }"
+                  :aria-pressed="settings.readingTheme === option"
+                  @click="updateSetting('readingTheme', option)"
                 >
                   {{ option[0].toUpperCase() + option.slice(1) }}
                 </button>
@@ -543,6 +543,27 @@ defineExpose({
             </div>
 
             <p class="storage-note">Storage key: <code>{{ storageKey }}</code></p>
+          </section>
+
+          <section id="settings-about" class="settings-section" aria-labelledby="settings-about-title">
+            <div class="section-heading">
+              <span aria-hidden="true">LR</span>
+              <div>
+                <h3 id="settings-about-title">About</h3>
+                <p>LeafReader v2.0 keeps RSS reading calm, local-first, and portable.</p>
+              </div>
+            </div>
+
+            <div class="about-grid">
+              <div>
+                <h4>Version</h4>
+                <p>2.0 Reader Mode</p>
+              </div>
+              <div>
+                <h4>Project</h4>
+                <a href="https://github.com/" target="_blank" rel="noopener noreferrer">Github</a>
+              </div>
+            </div>
           </section>
         </div>
       </div>

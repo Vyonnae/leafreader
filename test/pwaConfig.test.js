@@ -22,10 +22,15 @@ describe("LeafReader PWA configuration", () => {
     )
   })
 
-  test("precaches only app assets and excludes API navigation without runtime data caches", () => {
+  test("precaches app assets, excludes API navigation, and runtime-caches reader data", () => {
     const workbox = viteConfigModule.pwaOptions?.workbox
 
-    expect(workbox.runtimeCaching).toEqual([])
+    expect(workbox.runtimeCaching).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ handler: "CacheFirst", options: expect.objectContaining({ cacheName: "leafreader-images" }) }),
+        expect.objectContaining({ handler: "NetworkFirst", options: expect.objectContaining({ cacheName: "leafreader-library" }) }),
+      ]),
+    )
     expect(
       workbox.navigateFallbackDenylist.some((rule) =>
         rule.test("/api/library"),

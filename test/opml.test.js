@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test } from "vitest"
-import { parseOpmlFile } from "../src/utils/opml.js"
+import { generateOPML, parseOpmlFile, parseOPML } from "../src/utils/opml.js"
 
 describe("parseOpmlFile", () => {
   test("walks nested folders, deduplicates feed URLs, and keeps safe fields only", () => {
@@ -18,6 +18,7 @@ describe("parseOpmlFile", () => {
       { title: "Example", feedUrl: "https://example.com/rss", siteUrl: "https://example.com/", collectionName: "Tech" },
       { title: "Daily", feedUrl: "http://news.example/feed", siteUrl: "", collectionName: "News" }
     ])
+    expect(parseOPML(`<opml><body><outline text="Example" xmlUrl="https://example.com/rss"/></body></opml>`).feeds[0].title).toBe("Example")
   })
 
   test("rejects entity declarations and limits feed count", () => {
@@ -28,5 +29,15 @@ describe("parseOpmlFile", () => {
 
     expect(result.feeds).toHaveLength(100)
     expect(result.errors.some((error) => error.code === "TOO_MANY_FEEDS")).toBe(true)
+  })
+
+  test("generates portable OPML with escaped feed fields", () => {
+    const xml = generateOPML([
+      { title: "Design & Frontend", feedUrl: "https://example.com/rss.xml", siteUrl: "https://example.com/" },
+    ])
+
+    expect(xml).toContain("<opml version=\"2.0\">")
+    expect(xml).toContain("Design &amp; Frontend")
+    expect(xml).toContain("xmlUrl=\"https://example.com/rss.xml\"")
   })
 })

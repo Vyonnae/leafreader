@@ -1,7 +1,8 @@
 <script setup>
+import { computed, ref, watch } from 'vue'
 import StoryCard from './StoryCard.vue'
 
-defineProps({
+const props = defineProps({
   articles: {
     type: Array,
     required: true,
@@ -38,6 +39,18 @@ defineProps({
     type: String,
     required: true,
   },
+  selectedTag: {
+    type: String,
+    default: '',
+  },
+  statusFilter: {
+    type: String,
+    default: 'all',
+  },
+  dateFilter: {
+    type: String,
+    default: 'all',
+  },
   selectedArticleId: {
     type: [Number, String],
     default: null,
@@ -55,12 +68,27 @@ defineProps({
 const emit = defineEmits([
   'update:query',
   'update:card-view',
+  'update:status-filter',
+  'update:date-filter',
+  'clear-tag',
   'clear-publication',
   'mark-all-read',
   'open-article',
   'toggle-saved',
   'browse-all',
 ])
+
+const visibleCount = ref(60)
+const visibleArticles = computed(() => props.articles.slice(0, visibleCount.value))
+const hasMoreArticles = computed(() => visibleCount.value < props.articles.length)
+
+watch(() => props.articles, () => {
+  visibleCount.value = 60
+})
+
+function showMoreArticles() {
+  visibleCount.value = Math.min(props.articles.length, visibleCount.value + 60)
+}
 </script>
 
 <template>
@@ -86,6 +114,7 @@ const emit = defineEmits([
         >
           All publications <span aria-hidden="true">⌄</span>
         </button>
+        <button v-if="selectedTag" type="button" class="read-all" @click="emit('clear-tag')">Tag: {{ selectedTag }} x</button>
         <button class="read-all" type="button" @click="emit('mark-all-read')">Mark all as read</button>
       </div>
       <label class="search-wrap">
@@ -99,6 +128,26 @@ const emit = defineEmits([
         />
         <button v-if="query" type="button" aria-label="Clear search" @click="emit('update:query', '')">×</button>
       </label>
+      <div class="search-filters" role="group" aria-label="Search filters">
+        <label>
+          <span>Status</span>
+          <select :value="statusFilter" @change="emit('update:status-filter', $event.target.value)">
+            <option value="all">All</option>
+            <option value="unread">Unread</option>
+            <option value="saved">Saved</option>
+            <option value="read">Read</option>
+          </select>
+        </label>
+        <label>
+          <span>Date</span>
+          <select :value="dateFilter" @change="emit('update:date-filter', $event.target.value)">
+            <option value="all">Any time</option>
+            <option value="today">Today</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+          </select>
+        </label>
+      </div>
       <div class="view-switch" role="group" aria-label="Layout switcher">
         <button
           type="button"
@@ -124,7 +173,7 @@ const emit = defineEmits([
     <div class="story-count"><span>{{ catalogSummary }}</span><i></i><span>{{ cardView ? 'CARD VIEW' : 'LIST VIEW' }}</span></div>
     <div class="article-list" :class="{ grid: cardView }">
       <StoryCard
-        v-for="article in articles"
+        v-for="article in visibleArticles"
         :key="article.id"
         :article="article"
         :selected="selectedArticleId === article.id"
@@ -133,6 +182,9 @@ const emit = defineEmits([
         @toggle-saved="emit('toggle-saved', $event)"
       />
     </div>
+    <button v-if="hasMoreArticles" class="load-more-stories" type="button" @click="showMoreArticles">
+      Load more stories
+    </button>
 
     <div v-if="!articles.length" class="empty-state">
       <span aria-hidden="true">⌕</span>

@@ -37,6 +37,35 @@ export function parseOpmlFile(text, options = {}) {
   return { feeds, errors }
 }
 
+export function parseOPML(text, options = {}) {
+  return parseOpmlFile(text, options)
+}
+
+export function generateOPML(feeds = [], options = {}) {
+  const title = escapeXml(options.title || "LeafReader Subscriptions")
+  const now = new Date().toUTCString()
+  const outlines = feeds
+    .filter((feed) => feed?.feedUrl || feed?.url)
+    .map((feed) => {
+      const feedUrl = escapeXml(feed.feedUrl || feed.url)
+      const text = escapeXml(feed.title || feed.name || feedUrl)
+      const htmlUrl = feed.siteUrl ? ` htmlUrl="${escapeXml(feed.siteUrl)}"` : ""
+      return `    <outline text="${text}" title="${text}" type="rss" xmlUrl="${feedUrl}"${htmlUrl}/>`
+    })
+    .join("\n")
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>${title}</title>
+    <dateCreated>${now}</dateCreated>
+  </head>
+  <body>
+${outlines}
+  </body>
+</opml>`
+}
+
 function walkOutline(node, parentCollection, context) {
   const xmlUrl = normalizeHttpUrl(node.getAttribute("xmlUrl") || node.getAttribute("xmlurl") || "")
   const title = (node.getAttribute("title") || node.getAttribute("text") || "").trim()
@@ -77,4 +106,13 @@ function normalizeHttpUrl(value) {
   } catch {
     return ""
   }
+}
+
+function escapeXml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
 }

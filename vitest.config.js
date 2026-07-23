@@ -4,6 +4,6 @@ import vue from "@vitejs/plugin-vue"
 export default defineConfig({
   plugins: [vue()],
   test: {
-    exclude: ["node_modules/**", "dist/**", "e2e/**"]
+    exclude: ["node_modules/**", "dist/**", "e2e/**", ".worktrees/**"]
   }
 })

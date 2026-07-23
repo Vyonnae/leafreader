@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS = {
   fontSize: "medium",
   readingWidth: "comfortable",
   readingBackground: "fresh",
+  readingTheme: "light",
   defaultFocusMode: false,
   defaultLayout: "list",
   sidebarCollapsed: false,
@@ -21,6 +22,7 @@ const ALLOWED_VALUES = {
   fontSize: ["small", "medium", "large"],
   readingWidth: ["narrow", "comfortable", "wide"],
   readingBackground: ["fresh", "paper"],
+  readingTheme: ["light", "sepia", "dark"],
   defaultLayout: ["list", "cards"],
   motion: ["full", "reduced"],
 }
@@ -52,6 +54,33 @@ function sanitizeIdList(value) {
   return Array.from(
     new Set(value.filter((id) => ["number", "string"].includes(typeof id))),
   )
+}
+
+function sanitizeHistory(value) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((entry) => isPlainObject(entry) && ["number", "string"].includes(typeof entry.articleId))
+    .map((entry) => ({
+      articleId: entry.articleId,
+      readAt: typeof entry.readAt === "string" ? entry.readAt : new Date().toISOString(),
+      progress: Math.min(100, Math.max(0, Number(entry.progress || 0))),
+    }))
+    .slice(0, 200)
+}
+
+function sanitizeArticleMeta(value) {
+  if (!isPlainObject(value)) return {}
+  return Object.entries(value).reduce((meta, [id, entry]) => {
+    if (!isPlainObject(entry)) return meta
+    meta[id] = {
+      tags: Array.isArray(entry.tags)
+        ? Array.from(new Set(entry.tags.filter((tag) => typeof tag === "string").map((tag) => tag.trim()).filter(Boolean))).slice(0, 12)
+        : [],
+      readingProgress: Math.min(100, Math.max(0, Number(entry.readingProgress || entry.progress || 0))),
+      lastReadAt: typeof entry.lastReadAt === "string" ? entry.lastReadAt : null,
+    }
+    return meta
+  }, {})
 }
 
 function sanitizePublication(publication) {
@@ -96,6 +125,8 @@ export function loadLeafReaderState(userId = null) {
       version: VERSION,
       settings: { ...DEFAULT_SETTINGS },
       articleState: { readIds: [], savedIds: [] },
+      articleHistory: [],
+      articleMeta: {},
       userPublications: [],
     }
   }
@@ -109,6 +140,8 @@ export function loadLeafReaderState(userId = null) {
         version: VERSION,
         settings: { ...DEFAULT_SETTINGS },
         articleState: { readIds: [], savedIds: [] },
+        articleHistory: [],
+        articleMeta: {},
         userPublications: [],
       }
     }
@@ -126,6 +159,8 @@ export function loadLeafReaderState(userId = null) {
         readIds: sanitizeIdList(parsed.articleState?.readIds),
         savedIds: sanitizeIdList(parsed.articleState?.savedIds),
       },
+      articleHistory: sanitizeHistory(parsed.articleHistory),
+      articleMeta: sanitizeArticleMeta(parsed.articleMeta),
       userPublications: sanitizePublications(parsed.userPublications),
     }
   } catch (error) {
@@ -136,6 +171,8 @@ export function loadLeafReaderState(userId = null) {
       version: VERSION,
       settings: { ...DEFAULT_SETTINGS },
       articleState: { readIds: [], savedIds: [] },
+      articleHistory: [],
+      articleMeta: {},
       userPublications: [],
     }
   }
@@ -151,6 +188,8 @@ export function saveLeafReaderState(state, userId = null) {
       readIds: sanitizeIdList(state.articleState?.readIds),
       savedIds: sanitizeIdList(state.articleState?.savedIds),
     },
+    articleHistory: sanitizeHistory(state.articleHistory),
+    articleMeta: sanitizeArticleMeta(state.articleMeta),
     userPublications: sanitizePublications(state.userPublications),
   }
 

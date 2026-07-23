@@ -44,6 +44,9 @@ function openStory() {
       </div>
       <h2>{{ article.title }}</h2>
       <p v-if="showExcerpt" class="story-excerpt">{{ article.excerpt }}</p>
+      <div v-if="article.tags?.length" class="story-tags" aria-label="Article tags">
+        <span v-for="tag in article.tags.slice(0, 4)" :key="tag">{{ tag }}</span>
+      </div>
       <div class="story-footer">
         <span class="category-tag">{{ article.category }}</span>
         <span v-if="!article.read" class="unread-dot">Unread</span>
@@ -61,6 +64,6 @@ function openStory() {
         </button>
       </div>
     </div>
-    <div class="image-wrap"><img :src="article.image" :alt="article.title" /></div>
+    <div class="image-wrap"><img :src="article.image" :alt="article.title" loading="lazy" decoding="async" /></div>
   </article>
 </template>

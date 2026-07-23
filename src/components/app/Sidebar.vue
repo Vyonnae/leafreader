@@ -18,6 +18,22 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  tagStats: {
+    type: Array,
+    default: () => [],
+  },
+  historyGroups: {
+    type: Array,
+    default: () => [],
+  },
+  selectedTag: {
+    type: String,
+    default: '',
+  },
+  tagQuery: {
+    type: String,
+    default: '',
+  },
   selectedPublication: {
     type: String,
     required: true,
@@ -57,6 +73,9 @@ const emit = defineEmits([
   'select-view',
   'select-collection',
   'select-publication',
+  'select-tag',
+  'clear-tag',
+  'update:tag-query',
   'refresh-publication',
   'remove-publication',
   'open-add-publication',
@@ -97,7 +116,7 @@ defineExpose({
 
     <nav class="primary-nav" aria-label="Primary">
       <button
-        v-for="item in ['All Stories', 'Saved']"
+        v-for="item in ['All Stories', 'Saved', 'History']"
         :key="item"
         type="button"
         :class="{ active: view === item }"
@@ -106,6 +125,51 @@ defineExpose({
         <span class="nav-icon" aria-hidden="true">{{ item === 'All Stories' ? '☷' : '♡' }}</span>
         <span>{{ item }}</span>
         <b v-if="item === 'All Stories'">{{ unread }}</b>
+        <b v-if="item === 'History'">{{ historyGroups.reduce((total, group) => total + group.entries.length, 0) }}</b>
+      </button>
+    </nav>
+
+    <div v-if="historyGroups.length" class="nav-section">
+      <span>History</span>
+    </div>
+    <nav v-if="historyGroups.length" class="collections history-list" aria-label="History">
+      <button
+        v-for="group in historyGroups"
+        :key="group.label"
+        type="button"
+        :class="{ active: view === 'History' }"
+        @click="emit('select-view', 'History')"
+      >
+        <span class="nav-icon collection-dot sage" aria-hidden="true"></span>
+        <span>{{ group.label }}</span>
+        <b>{{ group.entries.length }}</b>
+      </button>
+    </nav>
+
+    <div v-if="tagStats.length" class="nav-section">
+      <span>Tags</span>
+      <button v-if="selectedTag" class="tiny-button" type="button" aria-label="Clear tag filter" @click="emit('clear-tag')">x</button>
+    </div>
+    <label v-if="tagStats.length" class="tag-search">
+      <input
+        :value="tagQuery"
+        type="text"
+        placeholder="Search tags..."
+        aria-label="Search tags"
+        @input="emit('update:tag-query', $event.target.value)"
+      />
+    </label>
+    <nav v-if="tagStats.length" class="collections tag-list" aria-label="Tags">
+      <button
+        v-for="tag in tagStats"
+        :key="tag.name"
+        type="button"
+        :class="{ active: selectedTag === tag.name }"
+        @click="emit('select-tag', tag.name)"
+      >
+        <span class="nav-icon collection-dot blue" aria-hidden="true"></span>
+        <span>{{ tag.name }}</span>
+        <b>{{ tag.count }}</b>
       </button>
     </nav>
 

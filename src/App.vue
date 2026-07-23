@@ -12,6 +12,7 @@ import Toast from './components/ui/Toast.vue'
 import { useAuth } from './composables/useAuth'
 import { useCloudSync } from './composables/useCloudSync'
 import { useLeafReaderStorage } from './composables/useLeafReaderStorage'
+import { summarizeArticle } from './services/aiService'
 import {
   discoverFeed,
   deleteAccount,
@@ -49,6 +50,10 @@ const view = ref('All Stories')
 const query = ref('')
 const selectedPublication = ref('All publications')
 const selectedCollection = ref('Morning pages')
+const selectedTag = ref('')
+const tagQuery = ref('')
+const statusFilter = ref('all')
+const dateFilter = ref('all')
 const selectedArticle = ref(null)
 const showAdd = ref(false)
 const showSettings = ref(false)
@@ -57,6 +62,10 @@ const focusMode = ref(false)
 const readerPane = ref(null)
 const settingsPanel = ref(null)
 const sidebar = ref(null)
+const readerLoading = ref(false)
+const readerError = ref('')
+const aiSummaries = ref({})
+const aiLoading = ref(false)
 const addError = ref('')
 const addBusy = ref(false)
 const addPreview = ref(null)
@@ -69,10 +78,13 @@ const migrationBusy = ref(false)
 
 let toastTimer
 let suppressNextPersist = false
+let articleRequestToken = 0
 
 const storedState = loadLeafReaderState()
 const storedReadIds = new Set(storedState.articleState.readIds)
 const storedSavedIds = new Set(storedState.articleState.savedIds)
+const storedArticleMeta = storedState.articleMeta || {}
+const articleHistory = ref(storedState.articleHistory || [])
 const settings = ref({ ...DEFAULT_SETTINGS, ...storedState.settings })
 
 const initialPublications = [
@@ -103,22 +115,45 @@ function articleImage(background, accent, shape) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
+function createArticleContent(paragraphs, options = {}) {
+  const body = paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('')
+  const quote = options.quote ? `<blockquote>${options.quote}</blockquote>` : ''
+  const list = options.items?.length
+    ? `<ul>${options.items.map((item) => `<li>${item}</li>`).join('')}</ul>`
+    : ''
+  const code = options.code ? `<pre><code>${options.code}</code></pre>` : ''
+  return `${body}${quote}${options.heading ? `<h2>${options.heading}</h2>` : ''}${list}${code}`
+}
+
 function createInitialArticles() {
   return [
-    { id: 1, publication: 'The Gentle Journal', category: 'SLOW LIVING', time: '12 min read', title: 'The small, luminous rituals that make a day feel like your own', excerpt: 'A notebook opened before the inbox, the clear taste of early tea, and the gentle discipline of leaving a little room for wonder.', image: articleImage('#e7f1ea', '#5f8d74', 'leaf'), originalUrl: 'https://example.com/leafreader/the-small-luminous-rituals', collections: ['Morning pages', 'To ponder'], read: false, saved: true, hue: 'sage' },
-    { id: 2, publication: 'Monocle', category: 'DESIGN NOTES', time: '8 min read', title: 'A field guide to the quiet confidence of good paper', excerpt: 'From the grain beneath your fingertips to the pause before a handwritten line, material details change how ideas arrive.', image: articleImage('#e7eef0', '#536d72', 'paper'), originalUrl: 'https://monocle.com/', collections: ['Morning pages'], read: false, saved: false, hue: 'blue' },
-    { id: 3, publication: 'Kinfolk', category: 'ON THE TABLE', time: '6 min read', title: 'The table is a place for unhurried conversations', excerpt: 'A few linen napkins, seasonal fruit and the permission to make an ordinary weekday feel considered.', image: articleImage('#f4ead6', '#756242', 'table'), originalUrl: 'https://www.kinfolk.com/', collections: ['Morning pages'], read: true, saved: false, hue: 'sand' },
-    { id: 4, publication: 'The Marginalian', category: 'IDEAS', time: '10 min read', title: 'Reading is a form of living twice', excerpt: 'Books carry us into a conversation much larger than the one we happen to be having with ourselves today.', image: articleImage('#f4e8df', '#7b5f51', 'books'), originalUrl: 'https://www.themarginalian.org/', collections: ['Morning pages', 'To ponder'], read: false, saved: true, hue: 'peach' },
+    { id: 1, publication: 'The Gentle Journal', feed: 'The Gentle Journal', category: 'SLOW LIVING', time: '12 min read', title: 'The small, luminous rituals that make a day feel like your own', excerpt: 'A notebook opened before the inbox, the clear taste of early tea, and the gentle discipline of leaving a little room for wonder.', content: createArticleContent(['A notebook opened before the inbox, the clear taste of early tea, and the gentle discipline of leaving a little room for wonder.', 'There is a kind of attention that returns us to ourselves. It is not loud, and it makes no demand for improvement. It simply asks us to notice the ordinary textures of a day.', 'Good reading spaces know when to disappear. They hold the line length, soften the edges and let the title, source and body settle into a rhythm that feels deliberate rather than managed.'], { quote: 'To read well is to keep a small room open inside the day.', heading: 'A slower margin', items: ['Keep the first sentence close enough to invite continuation.', 'Let images behave like quiet pauses, not loud interruptions.', 'Use small states and restrained controls to protect the page.'], code: 'const readingMode = "quiet"\nconst pageWidth = "comfortable"' }), extractedContent: '', readingTime: '12 min read', lastReadAt: null, progress: 0, readingProgress: 0, tags: ['Design', 'Mindful'], image: articleImage('#e7f1ea', '#5f8d74', 'leaf'), originalUrl: 'https://example.com/leafreader/the-small-luminous-rituals', url: 'https://example.com/leafreader/the-small-luminous-rituals', collections: ['Morning pages', 'To ponder'], read: false, saved: true, hue: 'sage', createdAt: new Date().toISOString() },
+    { id: 2, publication: 'Monocle', feed: 'Monocle', category: 'DESIGN NOTES', time: '8 min read', title: 'A field guide to the quiet confidence of good paper', excerpt: 'From the grain beneath your fingertips to the pause before a handwritten line, material details change how ideas arrive.', content: createArticleContent(['From the grain beneath your fingertips to the pause before a handwritten line, material details change how ideas arrive.', 'A good page gives structure without calling attention to itself. Weight, shade, grain and format all shape the mood of a note before the first word is written.', 'The best tools leave room for hesitation, revision and the small marks that make thinking visible.'], { heading: 'Paper as interface' }), extractedContent: '', readingTime: '8 min read', lastReadAt: null, progress: 0, readingProgress: 0, tags: ['Design', 'Frontend'], image: articleImage('#e7eef0', '#536d72', 'paper'), originalUrl: 'https://monocle.com/', url: 'https://monocle.com/', collections: ['Morning pages'], read: false, saved: false, hue: 'blue', createdAt: new Date().toISOString() },
+    { id: 3, publication: 'Kinfolk', feed: 'Kinfolk', category: 'ON THE TABLE', time: '6 min read', title: 'The table is a place for unhurried conversations', excerpt: 'A few linen napkins, seasonal fruit and the permission to make an ordinary weekday feel considered.', content: createArticleContent(['A few linen napkins, seasonal fruit and the permission to make an ordinary weekday feel considered.', 'The table is less an object than a pace. It gathers plates, elbows, half-finished stories and the kind of silence that feels shared rather than empty.', 'When the meal ends, the room keeps a trace of the conversation: a folded corner, a glass ring, a sentence someone will remember tomorrow.'], { heading: 'What stays after dinner' }), extractedContent: '', readingTime: '6 min read', lastReadAt: null, progress: 0, readingProgress: 0, tags: ['Design'], image: articleImage('#f4ead6', '#756242', 'table'), originalUrl: 'https://www.kinfolk.com/', url: 'https://www.kinfolk.com/', collections: ['Morning pages'], read: true, saved: false, hue: 'sand', createdAt: new Date().toISOString() },
+    { id: 4, publication: 'The Marginalian', feed: 'The Marginalian', category: 'IDEAS', time: '10 min read', title: 'Reading is a form of living twice', excerpt: 'Books carry us into a conversation much larger than the one we happen to be having with ourselves today.', content: createArticleContent(['Books carry us into a conversation much larger than the one we happen to be having with ourselves today.', 'To read is to borrow another cadence for a while, then return to the room with a slightly altered sense of what the room contains.', 'A sentence can wait years before it finds the hour in which it becomes useful. LeafReader keeps that hour close.'], { quote: 'Every serious reading life is also a record of attention.', heading: 'The second life of a sentence' }), extractedContent: '', readingTime: '10 min read', lastReadAt: null, progress: 0, readingProgress: 0, tags: ['AI', 'Mindful'], image: articleImage('#f4e8df', '#7b5f51', 'books'), originalUrl: 'https://www.themarginalian.org/', url: 'https://www.themarginalian.org/', collections: ['Morning pages', 'To ponder'], read: false, saved: true, hue: 'peach', createdAt: new Date().toISOString() },
   ]
 }
 
 function hydrateArticles() {
-  return createInitialArticles().map((article) => ({
+  return dedupeArticles(createInitialArticles().map((article) => ({
     ...article,
+    ...(storedArticleMeta[article.id] || {}),
     sourceType: 'demo',
     read: storedState.hasStoredState ? storedReadIds.has(article.id) : article.read,
     saved: storedState.hasStoredState ? storedSavedIds.has(article.id) : article.saved,
-  }))
+    readingProgress: storedArticleMeta[article.id]?.readingProgress || article.readingProgress || article.progress || 0,
+    progress: storedArticleMeta[article.id]?.readingProgress || article.progress || 0,
+  })))
+}
+
+function dedupeArticles(items) {
+  const seen = new Set()
+  return items.filter((article) => {
+    const key = String(article.url || article.originalUrl || article.id || '').toLowerCase()
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 const articles = ref(hydrateArticles())
@@ -153,13 +188,53 @@ const readerWidth = computed(() => ({
 const appStyles = computed(() => ({
   '--leaf-reader-max-width': readerWidth.value.page,
   '--leaf-reader-body-width': readerWidth.value.body,
-  '--leaf-reader-surface': settings.value.readingBackground === 'paper' ? '#f6f0e4' : 'var(--leaf-color-card)',
-  '--leaf-reader-shell': settings.value.readingBackground === 'paper' ? '#fbf5ea' : 'var(--leaf-color-paper-warm)',
+  '--leaf-reader-surface': settings.value.readingTheme === 'sepia' || settings.value.readingBackground === 'paper' ? '#f6f0e4' : 'var(--leaf-color-card)',
+  '--leaf-reader-shell': settings.value.readingTheme === 'sepia' || settings.value.readingBackground === 'paper' ? '#fbf5ea' : 'var(--leaf-color-paper-warm)',
 }))
 
 const originalTarget = computed(() => settings.value.openOriginalInNewTab ? '_blank' : null)
 const originalRel = computed(() => settings.value.openOriginalInNewTab ? 'noopener noreferrer' : null)
 const userPublications = computed(() => publications.value.filter((publication) => publication.isUserAdded && publication.sourceType !== 'cloud'))
+const selectedArticleContent = computed(() => {
+  const article = selectedArticle.value
+  if (!article) return ''
+  return article.content || article.extractedContent || article.contentHtml || (article.excerpt ? `<p>${escapeHtml(article.excerpt)}</p>` : '')
+})
+const historyArticleIds = computed(() => new Set(articleHistory.value.map((entry) => entry.articleId)))
+const taggedArticles = computed(() => articles.value.filter((article) => article.tags?.length))
+const tagStats = computed(() => {
+  const term = tagQuery.value.trim().toLowerCase()
+  const counts = new Map()
+  articles.value.forEach((article) => {
+    ;(article.tags || []).forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1))
+  })
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .filter((tag) => !term || tag.name.toLowerCase().includes(term))
+    .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name))
+})
+const historyGroups = computed(() => {
+  const byId = new Map(articles.value.map((article) => [article.id, article]))
+  const groups = { Today: [], Yesterday: [], 'Last Week': [] }
+  articleHistory.value.forEach((entry) => {
+    const article = byId.get(entry.articleId)
+    if (!article) return
+    const bucket = historyBucket(entry.readAt)
+    if (bucket) groups[bucket].push({ ...entry, article })
+  })
+  return Object.entries(groups)
+    .map(([label, entries]) => ({ label, entries }))
+    .filter((group) => group.entries.length)
+})
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 const {
   syncState,
@@ -228,11 +303,30 @@ const greetingName = computed(() => accountLabel.value === 'Guest Reader'
 const unread = computed(() => articles.value.filter((article) => !article.read).length)
 const filteredArticles = computed(() => articles.value.filter((article) => {
   const matchesView = view.value === 'Saved' ? article.saved : true
+  const matchesHistory = view.value === 'History' ? historyArticleIds.value.has(article.id) : true
   const matchesCollection = !selectedCollection.value || article.collections?.includes(selectedCollection.value)
   const matchesPublication = selectedPublication.value === 'All publications' || article.publication === selectedPublication.value
+  const matchesTag = !selectedTag.value || article.tags?.includes(selectedTag.value)
+  const matchesStatus = statusFilter.value === 'all'
+    || (statusFilter.value === 'unread' && !article.read)
+    || (statusFilter.value === 'saved' && article.saved)
+    || (statusFilter.value === 'read' && article.read)
+  const matchesDate = dateFilter.value === 'all' || articleMatchesDate(article, dateFilter.value)
   const term = query.value.toLowerCase()
-  const matchesQuery = !term || `${article.title} ${article.excerpt} ${article.publication}`.toLowerCase().includes(term)
-  return matchesView && matchesCollection && matchesPublication && matchesQuery
+  const searchable = [
+    article.title,
+    article.excerpt,
+    article.content,
+    article.extractedContent,
+    article.contentHtml,
+    article.author,
+    article.byline,
+    article.publication,
+    article.feed,
+    ...(article.tags || []),
+  ].join(' ').toLowerCase()
+  const matchesQuery = !term || searchable.includes(term)
+  return matchesView && matchesHistory && matchesCollection && matchesPublication && matchesTag && matchesStatus && matchesDate && matchesQuery
 }))
 const filteredUnread = computed(() => filteredArticles.value.filter((article) => !article.read).length)
 
@@ -337,6 +431,41 @@ function togglePublication(publication) {
   closeDrawerOnMobile()
 }
 
+function selectTag(tag) {
+  selectedTag.value = selectedTag.value === tag ? '' : tag
+  view.value = 'All Stories'
+  closeDrawerOnMobile()
+}
+
+function clearTag() {
+  selectedTag.value = ''
+}
+
+function articleMatchesDate(article, range) {
+  const value = article.publishedAt || article.createdAt || article.lastReadAt
+  if (!value) return false
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+  const now = new Date()
+  const ageMs = now.getTime() - date.getTime()
+  if (range === 'today') return date.toDateString() === now.toDateString()
+  if (range === 'week') return ageMs <= 7 * 24 * 60 * 60 * 1000
+  if (range === 'month') return ageMs <= 31 * 24 * 60 * 60 * 1000
+  return true
+}
+
+function historyBucket(readAt) {
+  const date = new Date(readAt)
+  if (Number.isNaN(date.getTime())) return ''
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  if (date.toDateString() === today.toDateString()) return 'Today'
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  if (today.getTime() - date.getTime() <= 7 * 24 * 60 * 60 * 1000) return 'Last Week'
+  return ''
+}
+
 function mapCloudPublication(subscription) {
   const name = subscription.custom_title || subscription.feed?.title || 'Untitled publication'
   return {
@@ -361,19 +490,29 @@ function mapCloudArticle(article, subscriptions, states) {
     sourceType: 'cloud',
     feedId: article.feed_id,
     publication,
+    feed: publication,
     category: 'RSS',
     time: `${article.reading_time || 1} min read`,
     title: article.title,
     excerpt: article.excerpt || '',
     image: article.image_url || articleImage('#e7f1ea', '#5f8d74', 'leaf'),
     originalUrl: article.url,
+    url: article.url,
     collections: ['Morning pages'],
     read: Boolean(state?.is_read),
     saved: Boolean(state?.is_saved),
     hue: 'sage',
+    content: article.content_html || '',
+    extractedContent: '',
     contentHtml: article.content_html || '',
     author: article.author || '',
     publishedAt: article.published_at,
+    readingTime: `${article.reading_time || 1} min read`,
+    lastReadAt: state?.last_read_at || null,
+    progress: Number(state?.progress || storedArticleMeta[article.id]?.readingProgress || 0),
+    readingProgress: Number(state?.progress || storedArticleMeta[article.id]?.readingProgress || 0),
+    tags: storedArticleMeta[article.id]?.tags || [],
+    createdAt: article.created_at || article.published_at || new Date().toISOString(),
   }
 }
 
@@ -388,7 +527,7 @@ async function loadCloudLibrary() {
     ))
 
     publications.value = [...initialPublications.map((publication) => ({ ...publication })), ...cloudPublications]
-    articles.value = cloudArticles
+    articles.value = dedupeArticles(cloudArticles)
     if (!cloudArticles.some((article) => article.id === selectedArticle.value?.id)) selectedArticle.value = null
   } catch (error) {
     showToast(userMessageForFeedError(error), { force: true })
@@ -401,15 +540,74 @@ async function openArticle(article) {
     article.read = true
     persistCloudArticleState(article, previous)
   }
+  article.lastReadAt = new Date().toISOString()
+  recordArticleHistory(article)
   selectedArticle.value = article
   focusMode.value = settings.value.defaultFocusMode
+  readerError.value = ''
+  articleRequestToken += 1
+  const requestToken = articleRequestToken
   await nextTick()
   await readerPane.value?.resetScroll()
+  await ensureReadableContent(article, requestToken)
 }
 
 function closeArticle() {
+  articleRequestToken += 1
   selectedArticle.value = null
   focusMode.value = false
+  readerLoading.value = false
+  readerError.value = ''
+}
+
+function hasReadableContent(article) {
+  const html = article?.content || article?.extractedContent || article?.contentHtml || ''
+  const paragraphCount = (html.match(/<p[\s>]/gi) || []).length
+  const plainText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  return plainText.length > Math.max(360, (article?.excerpt || '').length + 120) || paragraphCount >= 2
+}
+
+async function ensureReadableContent(article, requestToken) {
+  if (!article || hasReadableContent(article)) {
+    readerLoading.value = false
+    return
+  }
+
+  if (!article.originalUrl) {
+    readerError.value = 'This story does not include a source URL.'
+    readerLoading.value = false
+    return
+  }
+
+  readerLoading.value = true
+  readerError.value = ''
+
+  try {
+    const response = await fetch('/api/extract-article', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ url: article.originalUrl }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.message || 'Unable to fetch the full article.')
+    if (requestToken !== articleRequestToken || selectedArticle.value?.id !== article.id) return
+
+    article.extractedContent = payload.content || ''
+    article.content = article.content || payload.content || ''
+    article.excerpt = article.excerpt || payload.excerpt || ''
+    article.author = article.author || payload.author || payload.byline || ''
+    article.byline = article.byline || payload.byline || payload.author || ''
+    article.readingTime = payload.readingTime ? `${payload.readingTime} min read` : article.readingTime
+    article.image = article.image || payload.image
+  } catch (error) {
+    if (requestToken !== articleRequestToken || selectedArticle.value?.id !== article.id) return
+    readerError.value = error.message || 'Unable to fetch the full article.'
+  } finally {
+    if (requestToken === articleRequestToken) {
+      readerLoading.value = false
+      nextTick(() => readerPane.value?.resetScroll())
+    }
+  }
 }
 
 function toggleSaved(article) {
@@ -534,6 +732,68 @@ function stepFontSize(direction) {
   const index = order.indexOf(settings.value.fontSize)
   const nextIndex = Math.min(order.length - 1, Math.max(0, index + direction))
   updateSetting('fontSize', order[nextIndex])
+}
+
+function setReadingWidth(width) {
+  updateSetting('readingWidth', width)
+}
+
+function toggleReaderDarkMode() {
+  updateSetting('readingTheme', settings.value.readingTheme === 'dark' ? 'light' : 'dark')
+}
+
+function setReadingTheme(theme) {
+  updateSetting('readingTheme', theme)
+}
+
+function updateArticleProgress(value) {
+  if (!selectedArticle.value) return
+  const progress = Math.round(value)
+  selectedArticle.value.progress = progress
+  selectedArticle.value.readingProgress = progress
+  const historyEntry = articleHistory.value.find((entry) => entry.articleId === selectedArticle.value.id)
+  if (historyEntry) historyEntry.progress = progress
+}
+
+function recordArticleHistory(article) {
+  articleHistory.value = [
+    { articleId: article.id, readAt: article.lastReadAt, progress: article.readingProgress || article.progress || 0 },
+    ...articleHistory.value.filter((entry) => entry.articleId !== article.id),
+  ].slice(0, 200)
+}
+
+function addArticleTag({ article, tag }) {
+  const normalized = String(tag || '').trim()
+  if (!article || !normalized) return
+  article.tags = Array.from(new Set([...(article.tags || []), normalized])).slice(0, 12)
+}
+
+function removeArticleTag({ article, tag }) {
+  if (!article) return
+  article.tags = (article.tags || []).filter((item) => item !== tag)
+  if (selectedTag.value === tag && !articles.value.some((entry) => entry.tags?.includes(tag))) selectedTag.value = ''
+}
+
+async function summarizeSelectedArticle(article) {
+  if (!article || aiLoading.value) return
+  aiLoading.value = true
+  try {
+    aiSummaries.value = {
+      ...aiSummaries.value,
+      [article.id]: await summarizeArticle(article),
+    }
+  } catch (error) {
+    aiSummaries.value = {
+      ...aiSummaries.value,
+      [article.id]: {
+        summary: error.message || 'AI服务未配置',
+        keyPoints: [],
+        keywords: [],
+      },
+    }
+  } finally {
+    aiLoading.value = false
+  }
 }
 
 function openSettings() {
@@ -697,6 +957,12 @@ function handleKeepLocalOnly() {
 
 function clearReadingHistory() {
   articles.value.forEach((article) => { article.read = false })
+  articles.value.forEach((article) => {
+    article.progress = 0
+    article.readingProgress = 0
+    article.lastReadAt = null
+  })
+  articleHistory.value = []
   showToast('Reading history cleared.')
 }
 
@@ -751,12 +1017,22 @@ function browseAllStories() {
 
 const readIds = computed(() => articles.value.filter((article) => article.read).map((article) => article.id))
 const savedIds = computed(() => articles.value.filter((article) => article.saved).map((article) => article.id))
+const articleMeta = computed(() => articles.value.reduce((meta, article) => {
+  meta[article.id] = {
+    tags: article.tags || [],
+    readingProgress: article.readingProgress || article.progress || 0,
+    lastReadAt: article.lastReadAt || null,
+  }
+  return meta
+}, {}))
 const storageSignature = computed(() => JSON.stringify({
   settings: settings.value,
   articleState: {
     readIds: readIds.value,
     savedIds: savedIds.value,
   },
+  articleHistory: articleHistory.value,
+  articleMeta: articleMeta.value,
   userPublications: userPublications.value,
 }))
 
@@ -786,6 +1062,8 @@ watch(storageSignature, () => {
       readIds: readIds.value,
       savedIds: savedIds.value,
     },
+    articleHistory: articleHistory.value,
+    articleMeta: articleMeta.value,
     userPublications: userPublications.value,
   })
 }, { immediate: true })
@@ -834,6 +1112,10 @@ onBeforeUnmount(() => {
       :view="view"
       :unread="unread"
       :publications="publications"
+      :tag-stats="tagStats"
+      :history-groups="historyGroups"
+      :selected-tag="selectedTag"
+      :tag-query="tagQuery"
       :selected-publication="selectedPublication"
       :selected-collection="selectedCollection"
       :user="user"
@@ -846,6 +1128,9 @@ onBeforeUnmount(() => {
       @select-view="setView"
       @select-collection="setCollection"
       @select-publication="togglePublication"
+      @select-tag="selectTag"
+      @clear-tag="clearTag"
+      @update:tag-query="tagQuery = $event"
       @refresh-publication="handleRefreshPublication"
       @remove-publication="handleRemovePublication"
       @open-add-publication="openAddPublication"
@@ -891,11 +1176,17 @@ onBeforeUnmount(() => {
         :empty-description="emptyDescription"
         :query="query"
         :selected-publication="selectedPublication"
+        :selected-tag="selectedTag"
+        :status-filter="statusFilter"
+        :date-filter="dateFilter"
         :selected-article-id="selectedArticle?.id"
         :card-view="cardView"
         :show-excerpts="settings.showExcerpts"
         @update:query="query = $event"
         @update:card-view="cardView = $event"
+        @update:status-filter="statusFilter = $event"
+        @update:date-filter="dateFilter = $event"
+        @clear-tag="clearTag"
         @clear-publication="clearPublication"
         @mark-all-read="markAllRead"
         @open-article="openArticle"
@@ -907,15 +1198,29 @@ onBeforeUnmount(() => {
     <ReaderPane
       ref="readerPane"
       :article="selectedArticle"
+      :content="selectedArticleContent"
+      :loading="readerLoading"
+      :error="readerError"
       :focus-mode="focusMode"
       :font-size="readerFontSize"
+      :reading-width="settings.readingWidth"
+      :reading-theme="settings.readingTheme"
+      :ai-summary="selectedArticle ? aiSummaries[selectedArticle.id] : null"
+      :ai-loading="aiLoading"
+      :initial-progress="selectedArticle?.readingProgress || selectedArticle?.progress || 0"
       :original-target="originalTarget"
       :original-rel="originalRel"
       @close="closeArticle"
       @step-font-size="stepFontSize"
+      @set-reading-width="setReadingWidth"
+      @set-reading-theme="setReadingTheme"
       @toggle-read="toggleRead"
       @toggle-saved="toggleSaved"
       @toggle-focus="toggleFocusMode"
+      @update-progress="updateArticleProgress"
+      @add-tag="addArticleTag"
+      @remove-tag="removeArticleTag"
+      @summarize="summarizeSelectedArticle"
     />
 
     <AddPublicationModal
