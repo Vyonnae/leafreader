@@ -201,7 +201,6 @@ const selectedArticleContent = computed(() => {
   return article.content || article.extractedContent || article.contentHtml || (article.excerpt ? `<p>${escapeHtml(article.excerpt)}</p>` : '')
 })
 const historyArticleIds = computed(() => new Set(articleHistory.value.map((entry) => entry.articleId)))
-const taggedArticles = computed(() => articles.value.filter((article) => article.tags?.length))
 const tagStats = computed(() => {
   const term = tagQuery.value.trim().toLowerCase()
   const counts = new Map()
@@ -736,10 +735,6 @@ function stepFontSize(direction) {
 
 function setReadingWidth(width) {
   updateSetting('readingWidth', width)
-}
-
-function toggleReaderDarkMode() {
-  updateSetting('readingTheme', settings.value.readingTheme === 'dark' ? 'light' : 'dark')
 }
 
 function setReadingTheme(theme) {
